@@ -27,9 +27,7 @@ int main(int argc, char const *argv[])
   Camera *right;
 
   if(!Utility::initCameras(devMgr,left,right))
-  {
     return 0;
-  }
 
   Stereosystem stereo(left,right);
 
@@ -41,12 +39,8 @@ int main(int argc, char const *argv[])
 
   cv::FileStorage fs;
 
-
   if(!Utility::checkConfig(config,nodes,fs))
-  {
     return 0;
-  }
-
 
   std::string dirPath;
   fs["inputImages"] >> dirPath;
@@ -55,9 +49,7 @@ int main(int argc, char const *argv[])
   fs["outputParameter"] >> parameterOutput;
 
   if(!Utility::createDirectory(parameterOutput))
-  {
     LOG(ERROR) << tag << "Unable to create output directory for parameter" << std::endl;
-  }
 
   std::vector<std::string> filenamesLeft;
   std::vector<std::string> filenamesRight;
