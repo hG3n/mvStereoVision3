@@ -127,12 +127,15 @@ double Stereosystem::calibrate(std::vector<cv::Mat> const& leftImages,
       cv::cvtColor(leftImages[i], grayImageLeft, CV_BGR2GRAY);
       cv::cvtColor(rightImages[i], grayImageRight, CV_BGR2GRAY);
 
-      bool foundL = cv::findChessboardCorners( grayImageLeft, chessboardSize, cornersLeft, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FILTER_QUADS);
-      bool foundR = cv::findChessboardCorners( grayImageRight, chessboardSize, cornersRight, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FILTER_QUADS);
+      bool foundL = cv::findChessboardCorners( grayImageLeft, chessboardSize, cornersLeft, cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_FILTER_QUADS);
+      bool foundR = cv::findChessboardCorners( grayImageRight, chessboardSize, cornersRight, cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_FILTER_QUADS);
 
       if(foundL && foundR) {
-        cv::cornerSubPix(grayImageLeft, cornersLeft, cv::Size(5,5), cv::Size(-1,-1), cv::TermCriteria(CV_TERMCRIT_EPS | CV_TERMCRIT_ITER, 300, 0.1));
-        cv::cornerSubPix(grayImageRight, cornersRight, cv::Size(5,5), cv::Size(-1,-1), cv::TermCriteria(CV_TERMCRIT_EPS | CV_TERMCRIT_ITER, 300, 0.1));
+        // cv::cornerSubPix(grayImageLeft, cornersLeft, cv::Size(5,5), cv::Size(-1,-1), cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::MAX_ITER, 300, 0.0001));
+        // cv::cornerSubPix(grayImageRight, cornersRight, cv::Size(5,5), cv::Size(-1,-1), cv::TermCriteria(cv::TermCriteria::EPS | cv::TermCriteria::MAX_ITER, 300, 0.0001));
+
+        cv::cornerSubPix(grayImageLeft, cornersLeft, cv::Size(5,5), cv::Size(-1,-1), cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 0.01));
+        cv::cornerSubPix(grayImageRight, cornersRight, cv::Size(5,5), cv::Size(-1,-1), cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 0.01));
 
         imagePointsLeft.push_back(cornersLeft);
         imagePointsRight.push_back(cornersRight);
@@ -156,7 +159,9 @@ double Stereosystem::calibrate(std::vector<cv::Mat> const& leftImages,
     double stereoRMS = cv::stereoCalibrate(objectPoints,imagePointsLeft,imagePointsRight,
                                            mIntrinsicLeft,mDistCoeffsLeft,mIntrinsicRight,mDistCoeffsRight,
                                            imagesize,mR,mT,mE,mF,
-                                           cv::TermCriteria(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 300, 1e-7));
+                                           cv::CALIB_FIX_INTRINSIC,
+                                           cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 100, 1e-5));
+                                           // cv::TermCriteria(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 300, 1e-7));
 
     return stereoRMS;
   }
