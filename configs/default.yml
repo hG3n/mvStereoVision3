@@ -8,4 +8,4 @@ capturedImagesRectified: ./images/rotation_test
 capturedDisparities: ./images/disparityMaps
 
 outputParameter: ./parameter/0.13247
-inputParameter: ./parameter/newCalibration
+inputParameter: ./parameter/0.13247
