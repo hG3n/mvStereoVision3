@@ -160,27 +160,6 @@ bool Utility::checkConfig(std::string const& configfile, std::vector<std::string
 // -----------------------------------------------------------------------------
 // --- utility - helper --------------------------------------------------------
 // -----------------------------------------------------------------------------
-bool Utility::calcCoordinate(cv::Mat_<float> &toReturn,cv::Mat const& Q, cv::Mat const& disparityMap,int x,int y)
-{
-    double d = static_cast<float>(disparityMap.at<short>(y,x));
-    d/=16.0;
-    if(d > 0)
-    {
-      toReturn(0)=x;
-      toReturn(1)=y;
-      toReturn(2)=d;
-      toReturn(3)=1;
-
-      toReturn = Q*toReturn.t();
-      toReturn/=toReturn(3);
-      return true;
-    }
-    else
-    {
-      return false;
-    }
-}
-
 double Utility::checkSharpness(cv::Mat const& src)
 {
   cv::Mat M = (cv::Mat_<double>(3, 1) << -1, 2, -1);
@@ -193,4 +172,130 @@ double Utility::checkSharpness(cv::Mat const& src)
   cv::Mat FM = cv::abs(Lx) + cv::abs(Ly);
   return cv::mean(FM).val[0];
 }
+
+bool Utility::calcCoordinate(cv::Mat_<float> &toReturn,cv::Mat const& Q, cv::Mat const& disparityMap,int x,int y)
+{
+  double d = static_cast<float>(disparityMap.at<short>(y,x));
+  d/=16.0;
+  if(d > 0)
+  {
+    toReturn(0)=x;
+    toReturn(1)=y;
+    toReturn(2)=d;
+    toReturn(3)=1;
+
+    toReturn = Q*toReturn.t();
+    toReturn/=toReturn(3);
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+float Utility::calcDistance(cv::Mat const& Q, float const& dispValue, int binning)
+{
+  float d = dispValue / 16;
+  cv::Mat_<float> coordinateQ(1,4);
+
+  coordinateQ(0)=1;
+  coordinateQ(1)=1;
+  coordinateQ(2)=d;
+  coordinateQ(3)=1;
+
+  if(binning == 0)
+  {
+    coordinateQ = (Q)*coordinateQ.t();
+    coordinateQ/=coordinateQ(3);
+  
+    float distance = coordinateQ(2)/1000;
+    coordinateQ.release();
+
+    return distance;
+  }
+  else
+  {
+    coordinateQ = (Q/2)*coordinateQ.t();
+    coordinateQ/=coordinateQ(3);
+    
+    float distance = coordinateQ(2)/1000;
+    coordinateQ.release();
+
+    // because binning is half of the image
+
+    if(cvIsInf(distance))
+    {
+      return distance;
+    }
+    else
+      return distance/2;
+  }
+}
+
+void Utility::calcDistanceMap(cv::Mat &distanceMap, cv::Mat const& dMap, cv::Mat const& Q, int binning)
+{
+  //TODO:
+  // although it is inefficient and slow as ...
+  // TODO: fix crash when copying the distances into the mat
+  distanceMap = cv::Mat(dMap.rows, dMap.cols, CV_32F);
+  for(int r = 0; r < dMap.rows; ++r)
+  {
+    for(int c = 0; c < dMap.cols; ++c)
+    {
+      cv::Mat_<float> coord(1,4);
+      coord = calcCoordinate(coord, Q, dMap, c,r);
+      distanceMap.at<float>(c,r) = 0;
+      coord.release();
+    }
+  } 
+}
+
+float Utility::calcMeanDisparity(cv::Mat const& matrix)
+{
+  int total = 0;
+  int numElements = 0;
+  for(int r = 0; r < matrix.rows; ++r)
+  {
+    for(int c = 0; c < matrix.cols; ++c)
+    {
+      if(static_cast<float>(matrix.at<short>(r,c)) > 0)
+      {
+        total += static_cast<float>(matrix.at<short>(r,c));
+        ++numElements;
+      }
+    }
+  } 
+  // if the matrix appears to be empty because of any reason
+  // return disparity of 1.0 do indicate infinity
+  if(total == 0 || numElements == 0){
+    return 0.0;
+  }
+  else
+  {
+    float mean = total / abs(numElements);
+    return mean;
+  }
+}
+
+std::pair<float,float> Utility::calcMinMaxDisparity(cv::Mat const& matrix)
+{
+  std::vector<float> elements;
+  for(int r = 0; r < matrix.rows; ++r)
+  {
+    for(int c = 0; c < matrix.cols; ++c)
+    {
+      if(static_cast<float>(matrix.at<short>(r,c)) > 0)
+      {
+        float current = static_cast<float>(matrix.at<short>(r,c));
+        elements.push_back(current);
+      }
+    }
+  } 
+  auto min = std::min_element(std::begin(elements), std::end(elements));
+  auto max = std::max_element(std::begin(elements), std::end(elements));
+  return std::make_pair(*min,*max);
+}
+
+
 

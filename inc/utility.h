@@ -58,6 +58,12 @@ namespace Utility
 	double 	checkSharpness(cv::Mat const&);
 
 	bool 		calcCoordinate(cv::Mat_<float> &,cv::Mat const&, cv::Mat const&,int,int);
+
+	float calcDistance(cv::Mat const&, float const&,int);
+  void  calcDistanceMap(cv::Mat &, cv::Mat const&, cv::Mat const&, int);
+
+  float                  calcMeanDisparity(cv::Mat const&);
+  std::pair<float,float> calcMinMaxDisparity(cv::Mat const&);
 }
 
 #endif //__UTILITY__H__
