@@ -238,10 +238,10 @@ double Camera::calibrate(std::vector<cv::Mat> const& images, double patternsize,
   	cv::cvtColor(images[i], grayImage, CV_BGR2GRAY);
 
     // try to find chessboard corners within an image
-    bool found = cv::findChessboardCorners( grayImage, chessboardSize, corners, CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FILTER_QUADS);
+    bool found = cv::findChessboardCorners( grayImage, chessboardSize, corners, cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_FILTER_QUADS);
 
 		if(found) {
-      cv::cornerSubPix(grayImage, corners, cv::Size(5,5), cv::Size(-1,-1), cv::TermCriteria(CV_TERMCRIT_EPS | CV_TERMCRIT_ITER, 300, 0.1));
+      cv::cornerSubPix(grayImage, corners, cv::Size(5,5), cv::Size(-1,-1), cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 30, 0.01));
       imagePoints.push_back(corners);
       objectPoints.push_back(obj);
       std::cout << "Found " << i << std::endl;
