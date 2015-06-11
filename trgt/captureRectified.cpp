@@ -55,8 +55,8 @@ int main(int argc, char* argv[])
 
   Stereopair s;
 
-  left->setExposure(24000);
-  right->setExposure(24000);
+  left->setExposureMode(1);
+  right->setExposureMode(1);
 
   std::string pathLeft = outputDirectory+"/left";
   std::string pathRight = outputDirectory+"/right";
