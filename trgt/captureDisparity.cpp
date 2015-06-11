@@ -20,8 +20,8 @@ bool newDisparityMap3 = false;
 bool running = true;
 cv::Mat dispMapSGBM, dispMapBM, dispMapNCC;
 
-cv::StereoSGBM disparitySGBM;
-cv::StereoBM disparityBM;
+cv::Ptr<cv::StereoSGBM> disparitySGBM;
+cv::Ptr<cv::StereoBM> disparityBM;
 
 int numDispSGBM = 16;
 int windSizeSGBM = 5;
@@ -29,29 +29,29 @@ int windSizeSGBM = 5;
 int numDispBM = 16;
 int windSizeBM = 5;
 
-double baseline ;
-double fx ;
-double fy ;
-double cx ;
-double cy ;
+double baseline;
+double fx;
+double fy;
+double cx;
+double cy;
 
 cv::Mat R, R_32F;
-	cv::Mat disparityMap_32FC1;
+cv::Mat disparityMap_32FC1;
 
-void disparityCalc(Stereopair const& s, cv::StereoSGBM &disparity)
+void disparityCalc(Stereopair const& s, cv::Ptr<cv::StereoSGBM> &disparity)
 {
 	while(running)
 	{
 		std::unique_lock<std::mutex> ul(disparityLockSGBM);
 		cond_var.wait(ul);
 		Disparity::sgbm(s, dispMapSGBM, disparity);
-        dispMapSGBM.convertTo(disparityMap_32FC1,CV_32FC1);
+    dispMapSGBM.convertTo(disparityMap_32FC1,CV_32FC1);
 
 		newDisparityMap=true;
 	}
 }
 
-void disparityCalcBM( Stereopair const& s, cv::StereoBM &disparity)
+void disparityCalcBM( Stereopair const& s, cv::Ptr<cv::StereoBM> &disparity)
 {
 	while(running)
 	{
@@ -77,16 +77,16 @@ void disparityCalcBM( Stereopair const& s, cv::StereoBM &disparity)
 
 void changeNumDispSGBM(int, void*)
 {
-    numDispSGBM+=numDispSGBM%16;
+  numDispSGBM+=numDispSGBM%16;
 
-    if(numDispSGBM < 16)
-    {
-        numDispSGBM = 16;
-        cv::setTrackbarPos("Num Disp", "SGBM", numDispSGBM);
-    }
-
+  if(numDispSGBM < 16)
+  {
+    numDispSGBM = 16;
     cv::setTrackbarPos("Num Disp", "SGBM", numDispSGBM);
-    disparitySGBM = cv::StereoSGBM(0,numDispSGBM,windSizeSGBM,8*windSizeSGBM*windSizeSGBM,32*windSizeSGBM*windSizeSGBM);
+  }
+
+  cv::setTrackbarPos("Num Disp", "SGBM", numDispSGBM);
+  disparitySGBM->setNumDisparities(numDispSGBM);
 }
 
 void changeNumDispBM(int, void*)
@@ -99,63 +99,60 @@ void changeNumDispBM(int, void*)
         cv::setTrackbarPos("Num Disp", "BM", numDispBM);
     }
     cv::setTrackbarPos("Num Disp", "BM", numDispBM);
-    disparityBM = cv::StereoBM(CV_STEREO_BM_BASIC, numDispBM, windSizeBM);
+    disparityBM->setNumDisparities(numDispBM);
 }
 
 void changeWindSizeSGBM(int, void*)
 {
-    if(windSizeSGBM%2 == 0)
-        windSizeSGBM+=1;
+  if(windSizeSGBM%2 == 0)
+    windSizeSGBM+=1;
 
-    if(windSizeSGBM < 5)
-    {
-        windSizeSGBM = 5;
-        cv::setTrackbarPos("Wind Size", "SGBM", windSizeSGBM);
-    }
+  if(windSizeSGBM < 5)
+  {
+    windSizeSGBM = 5;
     cv::setTrackbarPos("Wind Size", "SGBM", windSizeSGBM);
-    disparitySGBM = cv::StereoSGBM(0,numDispSGBM,windSizeSGBM,8*windSizeSGBM*windSizeSGBM,32*windSizeSGBM*windSizeSGBM);
+  }
+  cv::setTrackbarPos("Wind Size", "SGBM", windSizeSGBM);
+  disparitySGBM->setBlockSize(windSizeSGBM);
+  // disparitySGBM->create(0,numDispSGBM,windSizeSGBM,8*windSizeSGBM*windSizeSGBM,32*windSizeSGBM*windSizeSGBM);
 }
 
 void changeWindSizeBM(int, void*)
 {
-    if(windSizeBM%2 == 0)
-        windSizeBM+=1;
+  if(windSizeBM%2 == 0)
+    windSizeBM+=1;
 
-
-    if(windSizeBM < 5)
-    {
-        windSizeBM = 5;
-        cv::setTrackbarPos("Wind Size", "BM", windSizeBM);
-    }
+  if(windSizeBM < 5)
+  {
+    windSizeBM = 5;
     cv::setTrackbarPos("Wind Size", "BM", windSizeBM);
-    disparityBM = cv::StereoBM(CV_STEREO_BM_BASIC, numDispBM, windSizeBM);
+  }
+  cv::setTrackbarPos("Wind Size", "BM", windSizeBM);
+  disparityBM->setBlockSize(windSizeBM)
 }
 
 void mouseClick(int event, int x, int y,int flags, void* userdata)
 {
-
   if  ( event == CV_EVENT_LBUTTONDOWN )
-     {
-
-            double d = double(dispMapSGBM.at<unsigned char>(x,y));
-            std::cout<<d<<std::endl;
-            if(d > 0)
-            {
-                cv::Mat_<float>  p(3,1), pFinish(3,1);
-                p(2) = baseline*fx/d;
-                p(0) = p(2)*(x-cx)/fx;
-                p(1) = p(2)*(y-cy)/fy;
-                pFinish = R_32F.t()*p;
-                std::cout<< p(0) << " " << p(1) << " " << p(2) << std::endl;
-                std::cout<< pFinish(0) << " " << pFinish(1) << " " << pFinish(2) << std::endl;
-                std::cout<<"distance: " << (pFinish(2))/1000.0 <<std::endl;
-            }
-            else
-            {
-                std::cout <<"invalid disparity\n";
-            }
-
-     }
+  {
+    double d = double(dispMapSGBM.at<unsigned char>(x,y));
+    std::cout<<d<<std::endl;
+    if(d > 0)
+    {
+      cv::Mat_<float>  p(3,1), pFinish(3,1);
+      p(2) = baseline*fx/d;
+      p(0) = p(2)*(x-cx)/fx;
+      p(1) = p(2)*(y-cy)/fy;
+      pFinish = R_32F.t()*p;
+      std::cout<< p(0) << " " << p(1) << " " << p(2) << std::endl;
+      std::cout<< pFinish(0) << " " << pFinish(1) << " " << pFinish(2) << std::endl;
+      std::cout<<"distance: " << (pFinish(2))/1000.0 <<std::endl;
+    }
+    else
+    {
+      std::cout <<"invalid disparity\n";
+    }
+}
      // else if  ( event == CV_EVENT_RBUTTONDOWN )
      // {
      //      std::cout << "Right button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
@@ -173,20 +170,18 @@ void mouseClick(int event, int x, int y,int flags, void* userdata)
 
 }
 
-
 void initWindows()
 {
 	cv::namedWindow("SGBM" ,1);
-    cv::namedWindow("BM" ,1);
+  cv::namedWindow("BM" ,1);
 
 	cv::createTrackbar("Num Disp", "SGBM", &numDispSGBM, 320, changeNumDispSGBM);
-    cv::createTrackbar("Wind Size", "SGBM", &windSizeSGBM, 51, changeWindSizeSGBM);
+  cv::createTrackbar("Wind Size", "SGBM", &windSizeSGBM, 51, changeWindSizeSGBM);
 
-    cv::createTrackbar("Num Disp", "BM", &numDispBM, 320, changeNumDispBM);
-    cv::createTrackbar("Wind Size", "BM", &windSizeBM, 51, changeWindSizeBM);
+  cv::createTrackbar("Num Disp", "BM", &numDispBM, 320, changeNumDispBM);
+  cv::createTrackbar("Wind Size", "BM", &windSizeBM, 51, changeWindSizeBM);
 
-    cv::setMouseCallback("SGBM", mouseClick, NULL);
-
+  cv::setMouseCallback("SGBM", mouseClick, NULL);
 }
 
 // void disparityCalcNCC( Stereopair const& s) {
@@ -198,8 +193,6 @@ void initWindows()
 // 		newDisparityMap3=true;
 // 	}
 // }
-
-
 
 int main(int argc, char* argv[])
 {
@@ -213,16 +206,13 @@ int main(int argc, char* argv[])
 
 	initWindows();
 	if(!Utility::initCameras(devMgr,left,right))
-	{
 		return 0;
-	}
-
 
 	baseline =131.97;
-    fx = 615.00087800830659;
-    fy = 614.52456559429913;
-    cx = 375.75962528613366;
-    cy = 232.47166090354159;
+  fx = 615.00087800830659;
+  fy = 614.52456559429913;
+  cx = 375.75962528613366;
+  cy = 232.47166090354159;
 
 	std::vector<std::string> nodes;
   nodes.push_back("inputParameter");
@@ -232,12 +222,8 @@ int main(int argc, char* argv[])
 
   cv::FileStorage fs;
 
-
   if(!Utility::checkConfig(config,nodes,fs))
-  {
     return 0;
-  }
-
 
   std::string inputParameter;
   fs["inputParameter"] >> inputParameter;
@@ -278,9 +264,7 @@ int main(int argc, char* argv[])
     return 0;
   }
 
-
 	Stereosystem stereo(left,right);
-
 
   if(!stereo.loadIntrinsic(inputParameter+"/intrinsic.yml"))
     return 0;
@@ -290,14 +274,11 @@ int main(int argc, char* argv[])
 	int key = 0;
  	int binning = 1;
 	Stereopair s;
-	double focusLeft, focusRight;
-	
-	//left->setBinning(binning);
-	//right->setBinning(binning);
+
 	stereo.resetRectification();
 
-	disparitySGBM = cv::StereoSGBM(0,numDispSGBM,windSizeSGBM,8*windSizeSGBM*windSizeSGBM,32*windSizeSGBM*windSizeSGBM);
-	disparityBM  = cv::StereoBM(CV_STEREO_BM_BASIC, numDispBM, windSizeBM);
+	disparitySGBM->create(0,numDispSGBM,windSizeSGBM,8*windSizeSGBM*windSizeSGBM,32*windSizeSGBM*windSizeSGBM);
+	disparityBM->create(numDispBM, windSizeBM);
 
 	std::thread disp(disparityCalc,std::ref(s),std::ref(disparitySGBM));
 	std::thread disp2(disparityCalcBM,std::ref(s),std::ref(disparityBM));
@@ -309,7 +290,6 @@ int main(int argc, char* argv[])
 		stereo.getRectifiedImagepair(s);
 		cv::imshow("Left", s.mLeft);
 		cv::imshow("Right", s.mRight);
-
 
 		if(newDisparityMap)
 		{
