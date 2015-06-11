@@ -128,7 +128,7 @@ void changeWindSizeBM(int, void*)
     cv::setTrackbarPos("Wind Size", "BM", windSizeBM);
   }
   cv::setTrackbarPos("Wind Size", "BM", windSizeBM);
-  disparityBM->setBlockSize(windSizeBM)
+  disparityBM->setBlockSize(windSizeBM);
 }
 
 void mouseClick(int event, int x, int y,int flags, void* userdata)
@@ -178,8 +178,8 @@ void initWindows()
 	cv::createTrackbar("Num Disp", "SGBM", &numDispSGBM, 320, changeNumDispSGBM);
   cv::createTrackbar("Wind Size", "SGBM", &windSizeSGBM, 51, changeWindSizeSGBM);
 
-  cv::createTrackbar("Num Disp", "BM", &numDispBM, 320, changeNumDispBM);
-  cv::createTrackbar("Wind Size", "BM", &windSizeBM, 51, changeWindSizeBM);
+  // cv::createTrackbar("Num Disp", "BM", &numDispBM, 320, changeNumDispBM);
+  // cv::createTrackbar("Wind Size", "BM", &windSizeBM, 51, changeWindSizeBM);
 
   cv::setMouseCallback("SGBM", mouseClick, NULL);
 }
@@ -260,7 +260,7 @@ int main(int argc, char* argv[])
   }
   else
   {
-    LOG(ERROR) << tag << "Unable to create directoryfor captured disparity maps." <<std::endl;
+    LOG(ERROR) << tag << "Unable to create directory for captured disparity maps." <<std::endl;
     return 0;
   }
 
@@ -277,11 +277,11 @@ int main(int argc, char* argv[])
 
 	stereo.resetRectification();
 
-	disparitySGBM->create(0,numDispSGBM,windSizeSGBM,8*windSizeSGBM*windSizeSGBM,32*windSizeSGBM*windSizeSGBM);
-	disparityBM->create(numDispBM, windSizeBM);
+	disparitySGBM = cv::StereoSGBM::create(0,numDispSGBM,windSizeSGBM,8*windSizeSGBM*windSizeSGBM,32*windSizeSGBM*windSizeSGBM);
+	// disparityBM->create(numDispBM, windSizeBM);
 
 	std::thread disp(disparityCalc,std::ref(s),std::ref(disparitySGBM));
-	std::thread disp2(disparityCalcBM,std::ref(s),std::ref(disparityBM));
+	// std::thread disp2(disparityCalcBM,std::ref(s),std::ref(disparityBM));
 	//std::thread disp3(disparityCalcTM, std::ref(s));
 	cv::Mat normalizedSGBM;
 	cv::Mat normalizedBM;
@@ -371,7 +371,7 @@ int main(int argc, char* argv[])
 	}
 
 	disp.join();
-	disp2.join();
+	// disp2.join();
 
 	return 0;
 }
