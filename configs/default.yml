@@ -1,11 +1,11 @@
 %YAML:1.0
 
-inputImages: ./images/newCalibration
+inputImages: ./images/calibration_new_small_obj
 outputImages: ./images/rotation_test
 
 capturedImagesRectified: ./images/rotation_test
 
 capturedDisparities: ./images/disparityMaps
 
-outputParameter: ./parameter/newCalibration
+outputParameter: ./parameter/0.13247
 inputParameter: ./parameter/newCalibration
