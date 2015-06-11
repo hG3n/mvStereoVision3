@@ -1,0 +1,20 @@
+#object files
+*.o
+#images
+*.jpg
+*.png
+#executable
+bin/
+#logiles
+logs/
+#directories
+bin/
+obj/
+trgt_obj/
+#fileadding script
+addfiles
+#docu
+docu/
+#sumlime project files
+*.sublime-project
+*.sublime-workspace
