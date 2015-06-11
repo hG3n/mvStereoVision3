@@ -91,6 +91,21 @@ cv::Mat Camera::getDistCoeffs() const
 // -----------------------------------------------------------------------------
 // --- setter ------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+void Camera::setExposureMode(unsigned int mode)
+{
+  switch(mode)
+  {
+    case AUTO_EXPOSURE_OFF:
+      mCameraSettingsBlueFOX.autoExposeControl.write(mvIMPACT::acquire::TAutoExposureControl::aecOff);
+      LOG(INFO) << mTag << "Set Auto Exposure Mode: OFF" << std::endl;
+      break;
+    case AUTO_EXPOSURE:
+      mCameraSettingsBlueFOX.autoExposeControl.write(mvIMPACT::acquire::TAutoExposureControl::aecOn);
+      LOG(INFO) << mTag << "Set Auto Exposure Mode: ON" << std::endl;
+      break;
+  }
+}
+
 void Camera::setExposure(unsigned int exposure)
 {
   mCameraSettingsBlueFOX.expose_us.write(exposure);

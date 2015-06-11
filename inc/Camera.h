@@ -19,6 +19,9 @@
 #define BINNING_OFF 0
 #define BINNING_HV 1
 
+//Automatic Exposure
+#define AUTO_EXPOSURE_OFF 0
+#define AUTO_EXPOSURE 1
 
 class Camera
 {
@@ -39,6 +42,7 @@ class Camera
     cv::Mat       getDistCoeffs()   const;
 
     //Setter
+    void      setExposureMode(unsigned int);
     void      setExposure(unsigned int);
     void      setGain(float);
     void      setPixelFormat(int);
