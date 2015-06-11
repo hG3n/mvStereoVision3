@@ -3,16 +3,16 @@
 #include "math.h"
 
 // Semi Global Block matching 
-void Disparity::sgbm(Stereopair const& inputImages, cv::Mat &output, cv::StereoSGBM dispCompute)
+void Disparity::sgbm(Stereopair const& inputImages, cv::Mat &output, cv::Ptr<cv::StereoSGBM> dispCompute)
 {
-	dispCompute(inputImages.mLeft,inputImages.mRight,output);
+  dispCompute->compute(inputImages.mLeft,inputImages.mRight,output);
 	//output/=16;
 }
 
 // simple blockmatching 
-void Disparity::bm(Stereopair const& inputImages, cv::Mat &output, cv::StereoBM dispCompute)
+void Disparity::bm(Stereopair const& inputImages, cv::Mat &output, cv::Ptr<cv::StereoBM> dispCompute)
 {
-  dispCompute(inputImages.mLeft,inputImages.mRight,output);
+  dispCompute->compute(inputImages.mLeft,inputImages.mRight,output);
   //output/=16;
 }
 
@@ -31,9 +31,9 @@ void Disparity::tm(Stereopair const& inputImages, cv::Mat &output, unsigned int 
   cv::Point2i maxLoc;
   // cv::Point2i matchLoc;
 
-  for(int i = 0; i < inputImages.mLeft.rows-kernelSize; ++i)
+  for(unsigned int i = 0; i < inputImages.mLeft.rows-kernelSize; ++i)
   {
-    for(int j = 0; j < inputImages.mLeft.cols-kernelSize ; ++j)
+    for(unsigned int j = 0; j < inputImages.mLeft.cols-kernelSize ; ++j)
     {
       cv::Point2i position(j,i);
       cv::Rect kernel(position, cv::Size(kernelSize,kernelSize));
