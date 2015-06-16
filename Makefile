@@ -34,6 +34,12 @@ OPENCV = `pkg-config opencv --libs`
 LIBS = -lmvDeviceManager -lpthread $(OPENCV)
 
 
+obstacle: directories $(OBJ)
+	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/obstacle.cpp -o $(TARGETOBJDIR)/obstacle.o
+	@echo Compiled obstacle.cpp successfully!
+	@$(CC) $(OBJ) $(TARGETOBJDIR)/obstacle.o -o $(BINDIR)/obstacle $(LIB_PATH) $(LIBS)
+	@echo Linking complete!
+
 liveDisparity: directories $(OBJ)
 	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/liveDisparity.cpp -o $(TARGETOBJDIR)/liveDisparity.o
 	@echo Compiled liveDisparity.cpp successfully!
