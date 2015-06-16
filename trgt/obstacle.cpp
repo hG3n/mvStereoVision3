@@ -156,6 +156,7 @@ int main(int argc, char* argv[])
   std::thread disparity(disparityCalc,std::ref(s),std::ref(disparitySGBM));
 
   std::vector<cv::Mat> subimages;
+  subimages.reserve(81);
   // obstacleDetection obst(dMapRaw, binning);
 
   running = true;
