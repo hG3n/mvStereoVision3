@@ -226,6 +226,12 @@ int main(int argc, char* argv[])
         case 'f':
           std::cout<<left->getFramerate()<<" "<<right->getFramerate()<<std::endl;
           break;
+        case 'c':
+          {
+            cv::FileStorage f("dMap.yml", cv::FileStorage::WRITE);
+            f << "dMap" + std::to_string(frame) << dMapRaw;
+            break;
+          }
         default:
           std::cout << "Key pressed has no action" <<std::endl;
           break;
