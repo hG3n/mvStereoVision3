@@ -161,9 +161,13 @@ void Camera::setBinning(unsigned int option)
 
 void Camera::setIntrinsic(cv::Mat intrinsic)
 {
-    intrinsic.copyTo(mIntrinsic);
+  intrinsic.copyTo(mIntrinsic);
 }
 
+void Camera::setRequestTimeout(int timeout)
+{
+  mTimeout = timeout;
+}
 
 // -----------------------------------------------------------------------------
 // --- functions ---------------------------------------------------------------
