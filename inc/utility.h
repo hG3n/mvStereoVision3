@@ -47,23 +47,30 @@ struct CameraInit
 
 namespace Utility
 {
+	// directory 
 	int 	getFiles (std::string const& dir, std::vector<std::string> &files);
 	bool 	directoryExist(std::string const& dirPath);
 	bool 	createDirectory(std::string const& dirPath);
 
+	// init cameras
 	bool 	initCameras(mvIMPACT::acquire::DeviceManager&,Camera*&,Camera*&);
 
+	// config
 	bool 	checkConfig(std::string const&,std::vector<std::string> const&, cv::FileStorage &);
 
+	// helper
 	double 	checkSharpness(cv::Mat const&);
 
-	bool 		calcCoordinate(cv::Mat_<float> &,cv::Mat const&, cv::Mat const&,int,int);
-
+	bool 	calcCoordinate(cv::Mat_<float> &,cv::Mat const&, cv::Mat const&,int,int);
 	float calcDistance(cv::Mat const&, float const&,int);
-  void  calcDistanceMap(cv::Mat &, cv::Mat const&, cv::Mat const&, int);
+  void  calcDistanceMap(cv::Mat&, cv::Mat const&, cv::Mat const&, int);
 
   float                  calcMeanDisparity(cv::Mat const&);
   std::pair<float,float> calcMinMaxDisparity(cv::Mat const&);
+  float									 calcStdDev(cv::Mat const&);
+
+  void subdivideImage(cv::Mat const&, int, std::vector<cv::Mat>&);
+
 }
 
 #endif //__UTILITY__H__

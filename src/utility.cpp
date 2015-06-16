@@ -87,7 +87,7 @@ bool Utility::initCameras(mvIMPACT::acquire::DeviceManager &devMgr, Camera *&lef
 
   if(devCnt != 2)
   {
-    LOG(ERROR)<< mTag <<"Invalid numver of cameras detected! Number of detected cameras: " <<\
+    LOG(ERROR)<< mTag <<"Invalid number of cameras detected! Number of detected cameras: " <<\
     devCnt << std::endl;
     return false;
   }
@@ -223,7 +223,6 @@ float Utility::calcDistance(cv::Mat const& Q, float const& dispValue, int binnin
     coordinateQ.release();
 
     // because binning is half of the image
-
     if(cvIsInf(distance))
     {
       return distance;
@@ -297,5 +296,88 @@ std::pair<float,float> Utility::calcMinMaxDisparity(cv::Mat const& matrix)
   return std::make_pair(*min,*max);
 }
 
+float Utility::calcStdDev(cv::Mat const& matrix)
+{
+  // function to calculate the stddev of valid disparity pixels within a matrix
+  float mean = Utility::calcMeanDisparity(matrix);
+  int numberOfElements = 0;
+  float temp = 0;
+
+  for (int r = 0; r < matrix.rows; ++r)
+  {
+    for (int c = 0; c < matrix.cols; ++c)
+    {
+      if (static_cast<float>(matrix.at<short>(r,c) > 0)
+      {
+        float value = static_cast<float>(matrix.at<float>(r,c));
+        temp += pow(value - mean,2);
+        ++numberOfElements;
+      }
+    }
+  }
+
+  float variance = temp / numberOfElements;
+  return sqrt(variance);
+}
 
 
+void Utility::subdivideImage(cv::Mat const& subimage, int binning, std::vector<cv::Mat> &output)
+{
+  int width = subimage.cols;
+  int height = subimage.rows;
+
+  if (width == 0 || height == 0)
+    LOG(INFO)<< mTag <<"Unable to subdivide Subimage. Input Mat Dimensions zero!\n";
+
+  cv::Rect tmpRect;
+  cv::Mat tmpMat;
+  int x1,x2,y1,y2;
+
+  // clear vector in order to release the matrices stored inside of it
+  output.clear();
+
+  for (int i = 0; i < 9; ++i)
+  {
+    if(i < 3)
+    {
+      x1 = i%3*(width/3);
+      x2 = (i%3+1)*(width/3);
+      y1 = 0;
+      y2 = height/3;
+      
+      tmpRect = cv::Rect(cv::Point(x1,y1),cv::Point(x2,y2));
+      // std::cout << tmpRect << std::endl;
+      tmpMat = subimage(tmpRect);
+
+      output.push_back(tmpMat);
+    }
+    else if(i > 2 && i < 6)
+    {
+      x1 = i%3*(width/3);
+      x2 = (i%3+1)*(width/3);
+      y1 = height/3;
+      y2 = height/3*2;
+
+      tmpRect = cv::Rect(cv::Point(x1,y1),cv::Point(x2,y2));
+      // std::cout << tmpRect << std::endl;
+      tmpMat = subimage(tmpRect);
+
+      output.push_back(tmpMat);
+    }
+    else if (i > 5)
+    {
+      x1 = i%3*(width/3);
+      x2 = (i%3+1)*(width/3);
+      y1 = height/3*2;
+      y2 = height;
+
+      tmpRect = cv::Rect(cv::Point(x1,y1),cv::Point(x2,y2));
+      // std::cout << tmpRect << std::endl;
+      tmpMat = subimage(tmpRect);
+
+      output.push_back(tmpMat);
+    }
+  }
+
+  tmpMat.release();
+}
