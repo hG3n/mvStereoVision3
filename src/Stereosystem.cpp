@@ -316,7 +316,7 @@ bool Stereosystem::loadIntrinsic(std::string const& file)
 
   if(fs["cameraMatrixLeft"].empty() || fs["cameraMatrixRight"].empty() || fs["distCoeffsRight"].empty() || fs["distCoeffsRight"].empty())
   {
-    LOG(ERROR) << mTag << "Node in " << file << "is empty." << std::endl;
+    LOG(ERROR) << mTag << "Node in " << file << " is empty." << std::endl;
     fs.release();
     return false;
   }
@@ -378,18 +378,21 @@ bool Stereosystem::saveIntrinsic(std::string const& file)
   if(success)
   {
     fs << "cameraMatrixLeft" << mIntrinsicLeft;
-      fs << "cameraMatrixRight" << mIntrinsicRight;
-      fs << "distCoeffsLeft" << mDistCoeffsLeft;
-      fs << "distCoeffsRight" << mDistCoeffsRight;
+    fs << "cameraMatrixRight" << mIntrinsicRight;
+    fs << "distCoeffsLeft" << mDistCoeffsLeft;
+    fs << "distCoeffsRight" << mDistCoeffsRight;
+    fs << "cameraMatrixLeftNew" << mP0;
+    fs << "cameraMatrixRightNew" << mP1;
+    fs << "QMatrix" << mQ;
 
     // if(fs["cameraMatrixLeft"].empty() || fs["cameraMatrixRight"].empty() || fs["distCoeffsLeft"].empty() || fs["distCoeffsRight"].empty())
-   //   {
-   //     LOG(ERROR) << mTag << "Unable to save intrisic to " << file << ". Empty Node" << std::endl;
-   //     fs.release();
+    //   {
+    //     LOG(ERROR) << mTag << "Unable to save intrisic to " << file << ". Empty Node" << std::endl;
+    //     fs.release();
     //  return false;
-   //   }
-      LOG(INFO) << mTag <<"Successfully saved Intrinsics to " << file << std::endl;
-      fs.release();
+    //   }
+    LOG(INFO) << mTag <<"Successfully saved Intrinsics to " << file << std::endl;
+    fs.release();
     return true;
   }
   else
