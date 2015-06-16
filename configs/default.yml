@@ -7,5 +7,5 @@ capturedImagesRectified: ./images/rotation_test
 
 capturedDisparities: ./images/disparityMaps
 
-outputParameter: ./parameter/0.13247
-inputParameter: ./parameter/0.13247
+outputParameter: ./parameters/rms013306
+inputParameter: ./parameters/rms013306
