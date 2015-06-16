@@ -159,7 +159,8 @@ int main(int argc, char* argv[])
   // obstacleDetection obst(dMapRaw, binning);
 
   running = true;
-  int frame = 0;  
+  int frame = 0;
+  int disparityCounter = 0;
   while(running)
   {
 
@@ -228,8 +229,9 @@ int main(int argc, char* argv[])
           break;
         case 'c':
           {
+            ++disparityCounter;
             cv::FileStorage f("dMap.yml", cv::FileStorage::WRITE);
-            f << "dMap" + std::to_string(frame) << dMapRaw;
+            f << "dMap_" + std::to_string(disparityCounter) << dMapRaw;
             break;
           }
         default:
