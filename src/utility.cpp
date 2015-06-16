@@ -307,7 +307,7 @@ float Utility::calcStdDev(cv::Mat const& matrix)
   {
     for (int c = 0; c < matrix.cols; ++c)
     {
-      if (static_cast<float>(matrix.at<short>(r,c) > 0)
+      if (static_cast<float>(matrix.at<short>(r,c) > 0))
       {
         float value = static_cast<float>(matrix.at<float>(r,c));
         temp += pow(value - mean,2);
