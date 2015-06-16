@@ -18,3 +18,5 @@ docu/
 #sumlime project files
 *.sublime-project
 *.sublime-workspace
+#saved disparity map
+dMap.yml
