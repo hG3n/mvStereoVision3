@@ -29,6 +29,8 @@ std::condition_variable cond_var;
 cv::Ptr<cv::StereoSGBM> disparitySGBM;
 int numDisp = 64;
 int windSize = 9;
+int speckleWindowSize = 50;
+int speckleRange = 1;
 bool newDisparityMap = false;
 
 cv::Mat dMapRaw;
@@ -53,13 +55,11 @@ void disparityCalc(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
 void changeNumDispSGBM(int, void*)
 {
   numDisp+=numDisp%16;
-
   if(numDisp < 16)
   {
-      numDisp = 16;
-      cv::setTrackbarPos("Num Disp", "SGBM", numDisp);
+    numDisp = 16;
+    cv::setTrackbarPos("Num Disp", "SGBM", numDisp);
   }
-
   cv::setTrackbarPos("Num Disp", "SGBM", numDisp);
   disparitySGBM->setNumDisparities(numDisp);
 }
@@ -68,16 +68,26 @@ void changeWindSizeSGBM(int, void*)
 {
   if(windSize%2 == 0)
       windSize+=1;
-
   if(windSize < 5)
   {
-      windSize = 5;
-      cv::setTrackbarPos("Wind Size", "SGBM", windSize);
+    windSize = 5;
+    cv::setTrackbarPos("Wind Size", "SGBM", windSize);
   }
   cv::setTrackbarPos("Wind Size", "SGBM", windSize);
   disparitySGBM->setBlockSize(windSize);
 }
 
+void changeSpeckleWindowSize(int, void*)
+{
+  cv::setTrackbarPos("Speckle Window Size", "SGBM", speckleWindowSize);
+  disparitySGBM->setSpeckleWindowSize(speckleWindowSize);
+}
+
+void changeSpeckleRange(int, void*)
+{
+  cv::setTrackbarPos("Speckle Window Size", "SGBM", speckleRange);
+  disparitySGBM->setSpeckleWindowSize(speckleRange);
+}
 
 void mouseClick(int event, int x, int y,int flags, void* userdata)
 {
@@ -95,9 +105,24 @@ void initWindows()
   cv::namedWindow("SGBM" ,1);
   cv::createTrackbar("Num Disp", "SGBM", &numDisp, 320, changeNumDispSGBM);
   cv::createTrackbar("Wind Size", "SGBM", &windSize, 51, changeWindSizeSGBM);
+  cv::createTrackbar("Speckle Window Size", "SGBM", &speckleWindowSize, 200, changeSpeckleWindowSize);
+  cv::createTrackbar("Speckle Range", "SGBM", &speckleRange, 10, changeSpeckleRange);
   cv::setMouseCallback("SGBM", mouseClick, NULL);
 }
 
+void subdivideImages(cv::Mat const& dMap, std::vector<std::vector<cv::Mat>> &subimages, int binning)
+{
+  std::vector<cv::Mat> temp;
+  Utility::subdivideImage(dMapRaw, binning, temp);
+
+  for (unsigned int i = 0; i < temp.size(); ++i)
+  {
+    std::vector<cv::Mat> temp2;
+    Utility::subdivideImage(temp[i], binning, temp2);
+    subimages.push_back(temp2);
+  }
+
+}
 
 int main(int argc, char* argv[])
 {
@@ -115,10 +140,12 @@ int main(int argc, char* argv[])
 
   Stereosystem stereo(left,right);
 
-  left->setExposureMode(1);
-  right->setExposureMode(1);
-  left->setRequestTimeout(400);
-  right->setRequestTimeout(400);
+  // left->setExposureMode(1);
+  // right->setExposureMode(1);
+  left->setExposure(4000);
+  right->setExposure(4000);
+  left->setRequestTimeout(1000);
+  right->setRequestTimeout(1000);
 
   // load settings from file and check for completeness
   std::vector<std::string> nodes;
@@ -155,17 +182,18 @@ int main(int argc, char* argv[])
   disparitySGBM = cv::StereoSGBM::create(0,numDisp,windSize,8*windSize*windSize,32*windSize*windSize);
   std::thread disparity(disparityCalc,std::ref(s),std::ref(disparitySGBM));
 
-  std::vector<cv::Mat> subimages;
-  subimages.reserve(81);
-  // obstacleDetection obst(dMapRaw, binning);
+  std::vector<std::vector<cv::Mat>> subimages;
+  subimages.reserve(9);
+
+  obstacleDetection obst;
 
   running = true;
   int frame = 0;
   int disparityCounter = 0;
   while(running)
   {
-
     stereo.getRectifiedImagepair(s);
+    // std::cout << frame << std::endl;
     cv::imshow("Left", s.mLeft);
     cv::imshow("Right", s.mRight);
 
@@ -174,10 +202,11 @@ int main(int argc, char* argv[])
 
     if(newDisparityMap)
     {
-      Utility::subdivideImage(dMapRaw, binning, subimages);
+      subimages.clear();
+      subdivideImages(dMapRaw, subimages, binning);
 
-      // obst.buildMeanDistanceMap(Q_32F);
-      // v = obst.getDistanceMapMean();
+      // obst.buildMeanMap(Q_32F, subimages);
+      obst.buildMeanDistanceMap(Q_32F, subimages, binning);
       if (binning == 0)
       {
         // obst.detectObstacles(MEAN_DISTANCE, std::make_pair(1.2,2.0));
@@ -210,7 +239,7 @@ int main(int argc, char* argv[])
         case 'q':
           LOG(INFO) << tag << "Exit requested" <<std::endl;
           delete left;
-          left = nullptr;
+          left  = nullptr;
           delete right;
           right = nullptr;
           cond_var.notify_one();
@@ -228,6 +257,8 @@ int main(int argc, char* argv[])
         case 'f':
           std::cout<<left->getFramerate()<<" "<<right->getFramerate()<<std::endl;
           break;
+        case '0':
+          std::cout << obst.getDistanceMapMean()[41] << std::endl;
         case 'c':
           {
             ++disparityCounter;
