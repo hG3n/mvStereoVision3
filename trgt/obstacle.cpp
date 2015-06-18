@@ -255,7 +255,7 @@ int main(int argc, char* argv[])
           stereo.resetRectification();
           break;
         case 'f':
-          std::cout<<left->getFramerate()<<" "<<right->getFramerate()<<std::endl;
+          std::cout<< left->getFramerate() << " " << right-> getFramerate() <<std::endl;
           break;
         case '0':
           std::cout << obst.getDistanceMapMean()[41] << std::endl;
@@ -267,7 +267,7 @@ int main(int argc, char* argv[])
             break;
           }
         default:
-          std::cout << "Key pressed has no action" <<std::endl;
+          std::cout << "Key pressed has no action" << std::endl;
           break;
       }
     }
