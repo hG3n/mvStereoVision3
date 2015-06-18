@@ -8,15 +8,6 @@ obstacleDetection::obstacleDetection():
   mDistanceMapMin(),
   mDistanceMapStdDev(),
   mMeanMap()
-{}
-
-obstacleDetection::obstacleDetection(cv::Mat const& disparityMap, int binning):
-  mTag("OBSTACLE DETECTION\t"),
-  mSamplepoints(),
-  mDistanceMapMean(),
-  mDistanceMapMin(),
-  mDistanceMapStdDev(),
-  mMeanMap()
 {
   // reserve memory for distance maps
   mDistanceMapMin.reserve(81);
@@ -57,31 +48,41 @@ std::vector<float> obstacleDetection::getDistanceMapStdDev() const
 // -----------------------------------------------------------------------------
 // --- builder -----------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void obstacleDetection::buildMeanMap(cv::Mat const& Q, std::vector<cv::Mat> const& subimages)
+void obstacleDetection::buildMeanMap(cv::Mat const& Q, std::vector<std::vector<cv::Mat>> const& subimages)
 {
   mMeanMap.clear();
   unsigned int numSubimages = subimages.size();
   if (numSubimages == 0)
     LOG(INFO)<< mTag <<"Unable to build Mean-Map. No Subimages provided\n";
 
-  for (unsigned int i = 0; i < subimages.size(); ++i)
+  for (unsigned int i = 0; i < numSubimages; ++i)
   {
-    float meanValue = Utility::calcMeanDisparity(subimages[i]);
-    mMeanMap.push_back(meanValue);
+    for (unsigned int j = 0; j < numSubimages; ++j)
+    {
+      float meanValue = Utility::calcMeanDisparity(subimages[i][j]);
+      mMeanMap.push_back(meanValue);
+    }
   }
-
 }
 
-void obstacleDetection::buildMeanDistanceMap(cv::Mat const& Q, std::vector<cv::Mat> const& subimages)
+void obstacleDetection::buildMeanDistanceMap(cv::Mat const& Q, std::vector<std::vector<cv::Mat>> const& subimages, int binning)
 {
   mDistanceMapMean.clear();
   unsigned int numSubimages = subimages.size();
   if (numSubimages == 0)
-    LOG(INFO)<< mTag <<"Unable to build Mean-Distance-Map. No Subimages provided\n";
+    LOG(INFO)<< mTag <<"Unable to build Mean-Map. No Subimages provided\n";
+
+  for (unsigned int i = 0; i < numSubimages; ++i)
+  {
+    for (unsigned int j = 0; j < numSubimages; ++j)
+    {
+      float meanValue = Utility::calcMeanDisparity(subimages[i][j]);
+      mDistanceMapMean.push_back(Utility::calcDistance(Q,meanValue,binning));
+    }
+  }
 }
 
-
-void obstacleDetection::buildMinDistanceMap(cv::Mat const& Q, std::vector<cv::Mat> const& subimages)
+void obstacleDetection::buildMinDistanceMap(cv::Mat const& Q, std::vector<std::vector<cv::Mat>> const& subimages)
 {
   mDistanceMapMin.clear();
   unsigned int numSubimages = subimages.size();
@@ -89,7 +90,7 @@ void obstacleDetection::buildMinDistanceMap(cv::Mat const& Q, std::vector<cv::Ma
     LOG(INFO)<< mTag <<"Unable to build Min-Distance-Map. No Subimages provided\n";
 }
 
-void obstacleDetection::buildStdDevDistanceMap(cv::Mat const& Q, std::vector<cv::Mat> const& subimages)
+void obstacleDetection::buildStdDevDistanceMap(cv::Mat const& Q, std::vector<std::vector<cv::Mat>> const& subimages)
 {
   mDistanceMapStdDev.clear();
   unsigned int numSubimages = subimages.size();

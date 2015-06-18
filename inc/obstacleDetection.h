@@ -34,10 +34,10 @@ class obstacleDetection
 
   // builder
   std::vector<cv::Mat> subdivideImage();
-  void buildMeanMap(cv::Mat const&, std::vector<cv::Mat> const&);
-  void buildMeanDistanceMap(cv::Mat const&, std::vector<cv::Mat> const&);
-  void buildMinDistanceMap(cv::Mat const&, std::vector<cv::Mat> const&);
-  void buildStdDevDistanceMap(cv::Mat const&, std::vector<cv::Mat> const&);
+  void buildMeanMap(cv::Mat const&, std::vector<std::vector<cv::Mat>> const&);
+  void buildMeanDistanceMap(cv::Mat const&, std::vector<std::vector<cv::Mat>> const&, int);
+  void buildMinDistanceMap(cv::Mat const&, std::vector<std::vector<cv::Mat>> const&);
+  void buildStdDevDistanceMap(cv::Mat const&, std::vector<std::vector<cv::Mat>> const&);
 
   // analyzer
   void detectObstacles(int const&, std::pair<float,float> const&);
