@@ -1,0 +1,5 @@
+%YAML:1.0
+numDisparities: 64
+windSize: 9
+speckleWindowSize: 50
+speckleWindowRange: 1
