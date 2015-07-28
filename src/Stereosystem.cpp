@@ -71,6 +71,13 @@ cv::Mat Stereosystem::getQMatrix() const
   return mQ;
 }
 
+std::vector<cv::Mat> Stereosystem::getNewKMats() const
+{
+  std::vector<cv::Mat> v;
+  v.push_back(mP0);
+  v.push_back(mP1);
+  return v;
+}
 // -----------------------------------------------------------------------------
 // --- functions ---------------------------------------------------------------
 // -----------------------------------------------------------------------------

@@ -27,6 +27,7 @@ class Stereosystem
     double  getBaseline() const;
     cv::Mat getRotationMatrix() const;
     cv::Mat getQMatrix() const;
+    std::vector<cv::Mat> getNewKMats() const;
     
     // functions
     bool    getImagepair(Stereopair&);
