@@ -254,19 +254,16 @@ float Utility::calcMeanDisparity(cv::Mat const& matrix)
 {
   int total = 0;
   int numElements = 0;
-  for(int r = 0; r < matrix.rows; ++r)
-  {
-    for(int c = 0; c < matrix.cols; ++c)
-    {
-      if(static_cast<float>(matrix.at<short>(r,c)) > 0)
-      {
-        total += static_cast<float>(matrix.at<short>(r,c));
-        ++numElements;
-      }
+
+  std::for_each(matrix.begin<float>(), matrix.end<float>(), [&numElements, &total](float value) {
+    if(value > 1) {
+      total += value;
+      ++numElements;
     }
-  } 
+  });
+
   // if the matrix appears to be empty because of any reason
-  // return disparity of 1.0 do indicate infinity
+  // return disparity of 1.0 to indicate infinity
   if(total == 0 || numElements == 0){
     return 0.0;
   }
