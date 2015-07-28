@@ -27,26 +27,18 @@ int main(int argc, char* argv[])
 
   Stereosystem stereo(left,right);
 
+  // load settings from file and check for completeness
   std::vector<std::string> nodes;
   nodes.push_back("inputParameter");
-  nodes.push_back("capturedImagesRectified");
-
   std::string config = "./configs/default.yml";
-
   cv::FileStorage fs;
-
-
   if(!Utility::checkConfig(config,nodes,fs))
-  {
     return 0;
-  }
-
 
   std::string inputParameter;
   fs["inputParameter"] >> inputParameter;
-
   std::string outputDirectory;
-  fs["capturedImagesRectified"] >> outputDirectory;
+  fs["capturedDisparities"] >> outputDirectory;
 
   if(!stereo.loadIntrinsic(inputParameter+"/intrinsic.yml"))
     return 0;
