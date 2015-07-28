@@ -50,5 +50,4 @@ void Disparity::tm(Stereopair const& inputImages, cv::Mat &output, unsigned int 
       //std::cout<< int(output.at<char>(i,j)) <<std::endl;
     }
   }
-
 }
