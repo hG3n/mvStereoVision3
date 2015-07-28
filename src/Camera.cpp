@@ -169,6 +169,11 @@ void Camera::setRequestTimeout(int timeout)
   mTimeout = timeout;
 }
 
+void Camera::setPixelClock(int clock)
+{
+  mCameraSettingsBlueFOX.pixelClock_KHz.write(mvIMPACT::acquire::cpc40000KHz);
+}
+
 // -----------------------------------------------------------------------------
 // --- functions ---------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -200,6 +205,8 @@ bool Camera::getImage(std::vector<char> &imageToReturn)
 			imageToReturn= std::vector<char>(static_cast<char*>(mRequest->imageData.read()),
 									                     static_cast<char*>(mRequest->imageData.read()) +\
 															         mRequest->imageSize.read());
+
+      // imageToReturn = 
 			mWidth = mRequest->imageWidth.read();
 			mHeight = mRequest->imageHeight.read();
 			mFunctionInterface.imageRequestUnlock(requestNr);

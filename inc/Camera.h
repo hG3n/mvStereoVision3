@@ -49,6 +49,7 @@ class Camera
   void      setBinning(unsigned int);
   void      setIntrinsic(cv::Mat);
   void      setRequestTimeout(int);
+  void      setPixelClock(int);
 
   //Functions
   bool        getImage(std::vector<char>&);
@@ -65,6 +66,7 @@ class Camera
   mvIMPACT::acquire::ImageDestination       mImageDestinaton;
   mvIMPACT::acquire::Request*               mRequest;
   int                                       mTimeout;
+  int                                       mPixelClock;
 
   //Log tag
   std::string                 mTag;
