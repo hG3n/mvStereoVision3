@@ -27,10 +27,7 @@ std::mutex disparityLock;
 std::condition_variable cond_var;
 
 cv::Ptr<cv::StereoSGBM> disparitySGBM;
-int numDisp = 64;
-int windSize = 9;
-int speckleWindowSize = 50;
-int speckleRange = 1;
+int numDisp, windSize, speckleWindowSize, speckleRange;
 bool newDisparityMap = false;
 
 cv::Mat dMapRaw;
@@ -86,7 +83,7 @@ void changeSpeckleWindowSize(int, void*)
 void changeSpeckleRange(int, void*)
 {
   cv::setTrackbarPos("Speckle Window Size", "SGBM", speckleRange);
-  disparitySGBM->setSpeckleWindowSize(speckleRange);
+  disparitySGBM->setSpeckleRange(speckleRange);
 }
 
 void mouseClick(int event, int x, int y,int flags, void* userdata)
@@ -110,8 +107,50 @@ void initWindows()
   cv::setMouseCallback("SGBM", mouseClick, NULL);
 }
 
+
+bool loadDisparityParameters(std::string const filename)
+{
+  cv::FileStorage fs;
+  bool success = fs.open(filename, cv::FileStorage::READ);
+
+  if(success)
+  {
+    if(fs["numDisparities"].empty() || fs["windSize"].empty() || fs["speckleWindowSize"].empty() || fs["speckleWindowRange"].empty())
+    {
+      LOG(ERROR) << "Node in " << filename << " is empty" << std::endl;
+      fs.release();
+      return false;
+    }
+
+    fs["numDisparities"]      >> numDisp;
+    fs["windSize"]            >> windSize;
+    fs["speckleWindowSize"]   >> speckleWindowSize;
+    fs["speckleWindowRange"]  >> speckleRange;
+
+    disparitySGBM->setNumDisparities(numDisp);
+    disparitySGBM->setBlockSize(windSize);
+    disparitySGBM->setSpeckleWindowSize(speckleWindowSize);
+    disparitySGBM->setSpeckleRange(speckleRange);
+  
+    LOG(INFO) << "Successfully loaded disparity parameters" << std::endl;
+
+    fs.release();
+    return true;
+  }
+  else
+  {
+    LOG(ERROR) << "Unable to open disparity parameters" << std::endl;
+    fs.release();
+    return false;
+  }
+}
+
 void subdivideImages(cv::Mat const& dMap, std::vector<std::vector<cv::Mat>> &subimages, int binning)
 {
+  // build a vector containing 81 elements
+  // the elements are ordererd along to a more coarser 3x3 grid
+  // after subdividing has been completed the images are ordered
+  // by 9 elements for every coarser 'subimage'
   std::vector<cv::Mat> temp;
   Utility::subdivideImage(dMapRaw, binning, temp);
 
@@ -121,8 +160,8 @@ void subdivideImages(cv::Mat const& dMap, std::vector<std::vector<cv::Mat>> &sub
     Utility::subdivideImage(temp[i], binning, temp2);
     subimages.push_back(temp2);
   }
-
 }
+
 
 int main(int argc, char* argv[])
 {
@@ -160,6 +199,8 @@ int main(int argc, char* argv[])
   std::string outputDirectory;
   fs["capturedDisparities"] >> outputDirectory;
 
+  std::cout << inputParameter << std::endl;
+
   if(!stereo.loadIntrinsic(inputParameter+"/intrinsic.yml"))
     return 0;
   if(!stereo.loadExtrinisic(inputParameter +"/extrinsic.yml"))
@@ -171,20 +212,29 @@ int main(int argc, char* argv[])
   char key = 0;
   int binning = 0;
 
+  // get one single imagepair in order to receive the Q Matrix
+  // which is dynamically created during the rectification
   stereo.getRectifiedImagepair(s);
   Q = stereo.getQMatrix();
   Q.convertTo(Q_32F,CV_32F);
 
+  // init OpenCV GUI
   cv::namedWindow("Left", cv::WINDOW_AUTOSIZE);
   cv::namedWindow("Right", cv::WINDOW_AUTOSIZE);
   initWindows();
 
+  // create dispparity object and connected thread
   disparitySGBM = cv::StereoSGBM::create(0,numDisp,windSize,8*windSize*windSize,32*windSize*windSize);
   std::thread disparity(disparityCalc,std::ref(s),std::ref(disparitySGBM));
+
+  // load disparity parameters to get intial values
+  if(!loadDisparityParameters("./configs/disparity.yml"))
+    return 0;
 
   std::vector<std::vector<cv::Mat>> subimages;
   subimages.reserve(9);
 
+  // init obstacle detection
   obstacleDetection obst;
 
   running = true;
@@ -257,14 +307,25 @@ int main(int argc, char* argv[])
         case 'f':
           std::cout<< left->getFramerate() << " " << right-> getFramerate() <<std::endl;
           break;
+        case 'r':
+          loadDisparityParameters("./configs/disparity.yml");
+          break;
         case '0':
           std::cout << obst.getDistanceMapMean()[41] << std::endl;
+          break;
         case 'c':
           {
             ++disparityCounter;
             cv::FileStorage f("dMap.yml", cv::FileStorage::WRITE);
             f << "dMap_" + std::to_string(disparityCounter) << dMapRaw;
             break;
+          }
+        case 'g':
+          {
+            cv::FileStorage g("newStuff.yml", cv::FileStorage::WRITE);
+            g << "Q" << Q_32F;
+            g << "K_L" << stereo.getNewKMats()[0];
+            g << "K_R" << stereo.getNewKMats()[1];
           }
         default:
           std::cout << "Key pressed has no action" << std::endl;
