@@ -1,11 +1,11 @@
 %YAML:1.0
 
-inputImages: ./images/calibration_new_small_obj
-outputImages: ./images/rotation_test
+inputImages: ./images/moritz-test2000
+outputImages: ./images/moritz-test2000
 
-capturedImagesRectified: ./images/rotation_test
+capturedImagesRectified: ./images/moritzTest20000
 
 capturedDisparities: ./images/disparityMaps
 
-outputParameter: ./parameters/rms013306
-inputParameter: ./parameters/rms013306
+outputParameter: ./parameters/wide-baseline
+inputParameter: ./parameters/wide-baseline
