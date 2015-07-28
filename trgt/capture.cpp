@@ -1,4 +1,4 @@
-#include <iostream>
+s#include <iostream>
 #include <string>
 
 //system command
@@ -88,8 +88,14 @@ int main(int argc, char* argv[])
     return 0;
   }
 
-  left->setExposureMode(1);
-  right->setExposureMode(1);
+  // left->setExposureMode(1);
+  // right->setExposureMode(1);
+
+  left->setExposure(6000);
+  right->setExposure(6000);
+
+  left->setPixelClock(1);
+  right->setPixelClock(1);
 
   char key = 0;
   int binning = 0;
