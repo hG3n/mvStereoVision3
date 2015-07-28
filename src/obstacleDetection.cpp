@@ -103,5 +103,7 @@ void obstacleDetection::buildStdDevDistanceMap(cv::Mat const& Q, std::vector<std
 // -----------------------------------------------------------------------------
 void obstacleDetection::detectObstacles(int const& mode, std::pair<float,float> const& threshold)
 {
-  std::cout << "foo" << std::endl;
+    
+    
+
 }
