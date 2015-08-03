@@ -8,4 +8,4 @@ capturedImagesRectified: ./images/dataset-binned
 capturedDisparities: ./images/disparityMaps
 
 outputParameter: ./parameters/foobar
-inputParameter: ./parameters/smallBL
+inputParameter: ./parameters/foobar

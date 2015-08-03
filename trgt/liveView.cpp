@@ -79,8 +79,8 @@ int main(int argc, char* argv[])
   Stereosystem stereo(left,right);
   Stereopair s;
 
-  left->setExposure(20000);
-  right->setExposure(22000);
+  left->setExposure(10000);
+  right->setExposure(10000);
 
   double sharpnessLeft = 0;
   double sharpnessRight = 0;

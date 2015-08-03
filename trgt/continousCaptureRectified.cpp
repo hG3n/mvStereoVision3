@@ -63,7 +63,6 @@ int main(int argc, char* argv[])
 
   unsigned int imageNumber = 0;
 
-
   if(Utility::directoryExist(pathLeft) || Utility::directoryExist(pathRight))
   {
     std::vector<std::string> tmp1, tmp2;

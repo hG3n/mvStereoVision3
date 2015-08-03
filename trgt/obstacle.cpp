@@ -27,7 +27,10 @@ std::mutex disparityLock;
 std::condition_variable cond_var;
 
 cv::Ptr<cv::StereoSGBM> disparitySGBM;
-int numDisp, windSize, speckleWindowSize, speckleRange;
+cv::Ptr<cv::StereoBM> disparityBM;
+
+int minDisparity, numDisp, blockSize, speckleWindowSize, speckleRange, disp12MaxDiff, preFilterCap, uniquenessRatio;
+int disparityMode;
 bool newDisparityMap = false;
 
 cv::Mat dMapRaw;
@@ -37,7 +40,9 @@ cv::Mat Q, Q_32F;
 cv::Mat R, R_32F;
 cv::Mat disparityMap_32FC1;
 
-void disparityCalc(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
+int exposure = 10000;
+
+void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
 {
   while(running)
   {
@@ -47,43 +52,6 @@ void disparityCalc(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
     dMapRaw.convertTo(disparityMap_32FC1,CV_32FC1);
     newDisparityMap=true;
   }
-}
-
-void changeNumDispSGBM(int, void*)
-{
-  numDisp+=numDisp%16;
-  if(numDisp < 16)
-  {
-    numDisp = 16;
-    cv::setTrackbarPos("Num Disp", "SGBM", numDisp);
-  }
-  cv::setTrackbarPos("Num Disp", "SGBM", numDisp);
-  disparitySGBM->setNumDisparities(numDisp);
-}
-
-void changeWindSizeSGBM(int, void*)
-{
-  if(windSize%2 == 0)
-      windSize+=1;
-  if(windSize < 5)
-  {
-    windSize = 5;
-    cv::setTrackbarPos("Wind Size", "SGBM", windSize);
-  }
-  cv::setTrackbarPos("Wind Size", "SGBM", windSize);
-  disparitySGBM->setBlockSize(windSize);
-}
-
-void changeSpeckleWindowSize(int, void*)
-{
-  cv::setTrackbarPos("Speckle Window Size", "SGBM", speckleWindowSize);
-  disparitySGBM->setSpeckleWindowSize(speckleWindowSize);
-}
-
-void changeSpeckleRange(int, void*)
-{
-  cv::setTrackbarPos("Speckle Window Size", "SGBM", speckleRange);
-  disparitySGBM->setSpeckleRange(speckleRange);
 }
 
 void mouseClick(int event, int x, int y,int flags, void* userdata)
@@ -96,18 +64,6 @@ void mouseClick(int event, int x, int y,int flags, void* userdata)
   }
 }
 
-
-void initWindows()
-{
-  cv::namedWindow("SGBM" ,1);
-  cv::createTrackbar("Num Disp", "SGBM", &numDisp, 320, changeNumDispSGBM);
-  cv::createTrackbar("Wind Size", "SGBM", &windSize, 51, changeWindSizeSGBM);
-  cv::createTrackbar("Speckle Window Size", "SGBM", &speckleWindowSize, 200, changeSpeckleWindowSize);
-  cv::createTrackbar("Speckle Range", "SGBM", &speckleRange, 10, changeSpeckleRange);
-  cv::setMouseCallback("SGBM", mouseClick, NULL);
-}
-
-
 bool loadDisparityParameters(std::string const filename)
 {
   cv::FileStorage fs;
@@ -115,22 +71,36 @@ bool loadDisparityParameters(std::string const filename)
 
   if(success)
   {
-    if(fs["numDisparities"].empty() || fs["windSize"].empty() || fs["speckleWindowSize"].empty() || fs["speckleWindowRange"].empty())
+    if(fs["numDisparities"].empty() || fs["blockSize"].empty() || fs["speckleWindowSize"].empty() || fs["speckleWindowRange"].empty())
     {
       LOG(ERROR) << "Node in " << filename << " is empty" << std::endl;
       fs.release();
       return false;
     }
 
+    fs["minDisparity"]        >> minDisparity;
     fs["numDisparities"]      >> numDisp;
-    fs["windSize"]            >> windSize;
+    fs["blockSize"]           >> blockSize;
+    fs["disp12MaxDiff"]       >> disp12MaxDiff;
+    fs["preFilterCap"]        >> preFilterCap;
+    fs["uniquenessRatio"]     >> uniquenessRatio;
     fs["speckleWindowSize"]   >> speckleWindowSize;
     fs["speckleWindowRange"]  >> speckleRange;
+    fs["mode"]                >> disparityMode;
 
+    disparitySGBM->setMinDisparity(minDisparity);
     disparitySGBM->setNumDisparities(numDisp);
-    disparitySGBM->setBlockSize(windSize);
+    disparitySGBM->setBlockSize(blockSize);
+    disparitySGBM->setPreFilterCap(preFilterCap);
+    disparitySGBM->setUniquenessRatio(uniquenessRatio);
+    disparitySGBM->setDisp12MaxDiff(disp12MaxDiff);
     disparitySGBM->setSpeckleWindowSize(speckleWindowSize);
     disparitySGBM->setSpeckleRange(speckleRange);
+
+    if(disparityMode == 1 )
+      disparitySGBM->setMode(cv::StereoSGBM::MODE_HH);
+    else
+      disparitySGBM->setMode(cv::StereoSGBM::MODE_SGBM);
   
     LOG(INFO) << "Successfully loaded disparity parameters" << std::endl;
 
@@ -162,7 +132,6 @@ void subdivideImages(cv::Mat const& dMap, std::vector<std::vector<cv::Mat>> &sub
   }
 }
 
-
 int main(int argc, char* argv[])
 {
   std::string tag = "MAIN\t";
@@ -170,21 +139,21 @@ int main(int argc, char* argv[])
   LOG(INFO) << tag << "Application started." << std::endl;
   mvIMPACT::acquire::DeviceManager devMgr;
 
-  // create both cameras and set exposure mode to auto
+  // create both cameras
   Camera *left;
   Camera *right;
 
+  // set intial exposure and request timeout in ms
+  left->setExposure(exposure);
+  right->setExposure(exposure);
+  left->setRequestTimeout(1000);
+  right->setRequestTimeout(1000);
+
+  // initialize cameras and create Stereosystem
   if(!Utility::initCameras(devMgr,left,right))
     return 0;
 
   Stereosystem stereo(left,right);
-
-  // left->setExposureMode(1);
-  // right->setExposureMode(1);
-  left->setExposure(4000);
-  right->setExposure(4000);
-  left->setRequestTimeout(1000);
-  right->setRequestTimeout(1000);
 
   // load settings from file and check for completeness
   std::vector<std::string> nodes;
@@ -199,38 +168,42 @@ int main(int argc, char* argv[])
   std::string outputDirectory;
   fs["capturedDisparities"] >> outputDirectory;
 
-  std::cout << inputParameter << std::endl;
-
   if(!stereo.loadIntrinsic(inputParameter+"/intrinsic.yml"))
     return 0;
   if(!stereo.loadExtrinisic(inputParameter +"/extrinsic.yml"))
     return 0;
 
-  // create stereo image pair
+   // create stereo image pair
   Stereopair s;
 
   char key = 0;
   int binning = 0;
 
   // get one single imagepair in order to receive the Q Matrix
-  // which is dynamically created during the rectification
+  // which is created during the rectification
   stereo.getRectifiedImagepair(s);
   Q = stereo.getQMatrix();
   Q.convertTo(Q_32F,CV_32F);
 
-  // init OpenCV GUI
+  // init OpenCV GUI objects
   cv::namedWindow("Left", cv::WINDOW_AUTOSIZE);
   cv::namedWindow("Right", cv::WINDOW_AUTOSIZE);
-  initWindows();
+  cv::namedWindow("SGBM" ,1);
+  cv::setMouseCallback("SGBM", mouseClick, NULL);
 
   // create dispparity object and connected thread
-  disparitySGBM = cv::StereoSGBM::create(0,numDisp,windSize,8*windSize*windSize,32*windSize*windSize);
-  std::thread disparity(disparityCalc,std::ref(s),std::ref(disparitySGBM));
+  disparitySGBM = cv::StereoSGBM::create(minDisparity,
+                                         numDisp,
+                                         blockSize,
+                                         8*blockSize*blockSize,
+                                         32*blockSize*blockSize);
+  std::thread disparity(disparityCalcSGBM,std::ref(s),std::ref(disparitySGBM));
 
   // load disparity parameters to get intial values
   if(!loadDisparityParameters("./configs/disparity.yml"))
     return 0;
 
+  // create subimage container to save created subdivisions
   std::vector<std::vector<cv::Mat>> subimages;
   subimages.reserve(9);
 
@@ -312,6 +285,16 @@ int main(int argc, char* argv[])
           break;
         case '0':
           std::cout << obst.getDistanceMapMean()[41] << std::endl;
+          break;
+        case 'E':
+          exposure += 1000;
+          left->setExposure(exposure);
+          right->setExposure(exposure);
+          break;
+        case 'e':
+          exposure -= 1000;
+          left->setExposure(exposure);
+          right->setExposure(exposure);
           break;
         case 'c':
           {

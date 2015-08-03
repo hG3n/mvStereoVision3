@@ -1,4 +1,4 @@
-s#include <iostream>
+#include <iostream>
 #include <string>
 
 //system command
@@ -91,8 +91,8 @@ int main(int argc, char* argv[])
   // left->setExposureMode(1);
   // right->setExposureMode(1);
 
-  left->setExposure(6000);
-  right->setExposure(6000);
+  left->setExposure(12000);
+  right->setExposure(12000);
 
   left->setPixelClock(1);
   right->setPixelClock(1);

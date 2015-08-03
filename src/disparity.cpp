@@ -9,6 +9,11 @@ void Disparity::sgbm(Stereopair const& inputImages, cv::Mat &output, cv::Ptr<cv:
 	//output/=16;
 }
 
+// void Disparity::binary_sgbm(Stereopair const& inputImages, cv::Mat &output, cv::Ptr<cv::StereoSGBM> dispCompute)
+// {
+//   dispCompute->compute(inputImages.mLeft,inputImages.mRight,output);
+// }
+
 // simple blockmatching 
 void Disparity::bm(Stereopair const& inputImages, cv::Mat &output, cv::Ptr<cv::StereoBM> dispCompute)
 {

@@ -97,7 +97,7 @@ bool Utility::initCameras(mvIMPACT::acquire::DeviceManager &devMgr, Camera *&lef
   {
     if(devMgr[1]->serial.read() == "26803881")
     {
-      LOG(INFO)<< mTag << "Successfully initialized both camers" <<std::endl;
+      LOG(INFO)<< mTag << "Successfully initialized both cameras" <<std::endl;
 
       left = new Camera(devMgr[0]);
       right= new Camera(devMgr[1]);
@@ -185,7 +185,7 @@ bool Utility::calcCoordinate(cv::Mat_<float> &toReturn,cv::Mat const& Q, cv::Mat
     toReturn(3)=1;
 
     toReturn = Q*toReturn.t();
-    toReturn/=toReturn(3);
+    toReturn/= toReturn(3);
     return true;
   }
   else
@@ -212,7 +212,7 @@ float Utility::calcDistance(cv::Mat const& Q, float const& dispValue, int binnin
     float distance = coordinateQ(2)/1000;
     coordinateQ.release();
 
-    return distance;
+    return distance * 2;
   }
   else
   {
