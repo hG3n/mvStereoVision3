@@ -1,1 +1,1 @@
-./bin/main
+sudo ./bin/obstacle
