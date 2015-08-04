@@ -34,11 +34,6 @@ std::vector<float> obstacleDetection::getDistanceMapMean() const
   return mDistanceMapMean;
 }
 
-std::vector<float> obstacleDetection::getDistanceMapMin() const
-{
-  return mDistanceMapMin;
-}
-
 std::vector<float> obstacleDetection::getDistanceMapStdDev() const
 {
   return mDistanceMapStdDev;
@@ -80,14 +75,6 @@ void obstacleDetection::buildMeanDistanceMap(cv::Mat const& Q, std::vector<std::
       mDistanceMapMean.push_back(Utility::calcDistance(Q,meanValue,binning));
     }
   }
-}
-
-void obstacleDetection::buildMinDistanceMap(cv::Mat const& Q, std::vector<std::vector<cv::Mat>> const& subimages)
-{
-  mDistanceMapMin.clear();
-  unsigned int numSubimages = subimages.size();
-  if (numSubimages == 0)
-    LOG(INFO)<< mTag <<"Unable to build Min-Distance-Map. No Subimages provided\n";
 }
 
 void obstacleDetection::buildStdDevDistanceMap(cv::Mat const& Q, std::vector<std::vector<cv::Mat>> const& subimages)
