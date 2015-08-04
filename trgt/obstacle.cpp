@@ -225,6 +225,9 @@ int main(int argc, char* argv[])
     cv::imshow("Left", s.mLeft);
     cv::imshow("Right", s.mRight);
 
+    // notify the thread to start 
+    cond_var.notify_one();
+
     if(newDisparityMap)
     {
       // cut the disparity map in order to ignore the camera shift
@@ -235,31 +238,17 @@ int main(int argc, char* argv[])
       // clear current subimages and refill the container with new ones
       subimages.clear();
       subdivideImages(dMapRaw, subimages, binning);
-
       // obst.buildMeanMap(Q_32F, subimages);
-      obst.buildMeanDistanceMap(Q_32F, subimages, binning);
-      if (binning == 0)
-      {
-        // obst.detectObstacles(MEAN_DISTANCE, std::make_pair(1.2,2.0));
-        // obst.detectObstacles(MIN_DISTANCE, std::make_pair(1.2,2.0));
-      }
-      else
-      {
-        // obst.detectObstacles(MEAN_DISTANCE, std::make_pair(0.8,1.2));
-        // obst.detectObstacles(MIN_DISTANCE, std::make_pair(0.8,1.2));
-      }
 
       // display stuff
       cv::normalize(dMapRaw,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
       cv::cvtColor(dMapNorm,dMapNorm,CV_GRAY2BGR);
-      View::drawObstacleGrid(dMapNorm, binning);
-      View::drawSubimageGrid(dMapNorm, binning);
+      // View::drawObstacleGrid(dMapNorm, binning);
+      // View::drawSubimageGrid(dMapNorm, binning);
       cv::imshow("SGBM",dMapNorm);
       newDisparityMap = false;
     }
 
-    // notify the thread to start 
-    cond_var.notify_one();
     key = cv::waitKey(5);
 
     // keypress stuff
