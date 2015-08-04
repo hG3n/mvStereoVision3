@@ -12,7 +12,7 @@ Camera::Camera():
 	mTag(" CAMERA "),
 	mWidth(0),
 	mHeight(0),
-	mBinningMode(0),
+	mBinningMode(),
 	mIntrinsic(),
 	mDistCoeffs()
 	{}
@@ -30,10 +30,10 @@ Camera::Camera(mvIMPACT::acquire::Device* dev):
 		 " ID:" + std::to_string(mDevice->deviceID.read())+ "\t"),
 	mWidth(0),
 	mHeight(0),
-	mBinningMode(0)
+	mBinningMode(binning::BINNING_OFF)
 {
 	LOG(INFO)<< mTag <<"Camera created." << std::endl;
-	this->setPixelFormat(MONO8);
+	this->setPixelFormat(pixelformat::MONO8);
 	this->setExposure(12000);
 	this->setGain(0);
 	std::vector<char> v;
@@ -95,11 +95,11 @@ void Camera::setExposureMode(unsigned int mode)
 {
   switch(mode)
   {
-    case AUTO_EXPOSURE_OFF:
+    case exposure::AUTO_EXPOSURE_OFF:
       mCameraSettingsBlueFOX.autoExposeControl.write(mvIMPACT::acquire::TAutoExposureControl::aecOff);
       LOG(INFO) << mTag << "Set Auto Exposure Mode: OFF" << std::endl;
       break;
-    case AUTO_EXPOSURE:
+    case exposure::AUTO_EXPOSURE:
       mCameraSettingsBlueFOX.autoExposeControl.write(mvIMPACT::acquire::TAutoExposureControl::aecOn);
       LOG(INFO) << mTag << "Set Auto Exposure Mode: ON" << std::endl;
       break;
@@ -122,7 +122,7 @@ void Camera::setPixelFormat(int option)
 {
   switch(option)
   {
-    case MONO8:
+    case pixelformat::MONO8:
       mImageDestinaton.pixelFormat.write(mvIMPACT::acquire::idpfMono8);
       mCameraSettingsBase.pixelFormat.write(mvIMPACT::acquire::ibpfMono8);
       LOG(INFO) << mTag << "Set Pixelformat to Mono8" << std::endl;
@@ -130,7 +130,7 @@ void Camera::setPixelFormat(int option)
     default:
       LOG(WARNING) << mTag << "Unknown Pixelformat" <<std::endl;
     //doesnt work
-    /*case MONO16:
+    /*case pixelformat::MONO16:
       mImageDestinaton.pixelFormat.write(mvIMPACT::acquire::idpfMono16);
       mCameraSettingsBase.pixelFormat.write(mvIMPACT::acquire::ibpfMono16);
       LOG(INFO) << mTag << "Set Pixelformat to Mono16" << std::endl;
@@ -142,12 +142,12 @@ void Camera::setBinning(unsigned int option)
 {
   switch(option)
   {
-    case BINNING_OFF:
+    case binning::BINNING_OFF:
       mCameraSettingsBlueFOX.binningMode.write(mvIMPACT::acquire::cbmOff);
       LOG(INFO) << mTag << "Set binning mode off." <<std::endl;
       mBinningMode = BINNING_OFF;
       break;
-    case BINNING_HV:
+    case binning::BINNING_HV:
       mCameraSettingsBlueFOX.binningMode.write(mvIMPACT::acquire::cbmBinningHV);
       LOG(INFO) << mTag << "Set horizontal and vertical binning mode." <<std::endl;
       mBinningMode = BINNING_HV;

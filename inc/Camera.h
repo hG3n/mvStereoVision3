@@ -11,21 +11,14 @@
 
 #include "opencv2/opencv.hpp"
 
-//Pixelformat
-#define MONO8 0
-#define MONO16 1
-
-//Binning
-#define BINNING_OFF 0
-#define BINNING_HV 1
-
-//Automatic Exposure
-#define AUTO_EXPOSURE_OFF 0
-#define AUTO_EXPOSURE 1
-
 class Camera
 {
   public:
+  // enums
+  enum pixelformat {MONO8, MONO16};
+  enum binning {BINNING_OFF, BINNING_HV};
+  enum exposure {AUTO_EXPOSURE_OFF, AUTO_EXPOSURE};
+
   //Constructor, Destructor
   Camera();
   Camera(mvIMPACT::acquire::Device*);
