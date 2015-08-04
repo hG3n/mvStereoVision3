@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <chrono>
 
 //system command
 #include <cstdlib>
@@ -41,11 +42,13 @@ cv::Mat R, R_32F;
 cv::Mat disparityMap_32FC1;
 
 int exposure = 10000;
+float gain = 4.0;
 
 void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
 {
   while(running)
   {
+
     std::unique_lock<std::mutex> ul(disparityLock);
     cond_var.wait(ul);
     Disparity::sgbm(s, dMapRaw, disparity);
@@ -61,6 +64,7 @@ void mouseClick(int event, int x, int y,int flags, void* userdata)
     double d = static_cast<float>(dMapRaw.at<short>(y,x));
     float distance = Utility::calcDistance(Q_32F, d, 1);
     std::cout << "disparityValue: " << d << "  distance: " << distance << std::endl;
+    std::cout << "x: " << x << " | y: " << y  << std::endl;
   }
 }
 
@@ -143,17 +147,19 @@ int main(int argc, char* argv[])
   Camera *left;
   Camera *right;
 
-  // set intial exposure and request timeout in ms
-  left->setExposure(exposure);
-  right->setExposure(exposure);
-  left->setRequestTimeout(1000);
-  right->setRequestTimeout(1000);
-
   // initialize cameras and create Stereosystem
   if(!Utility::initCameras(devMgr,left,right))
     return 0;
 
   Stereosystem stereo(left,right);
+
+  // reset intial exposure and request timeout in ms
+  left->setExposure(exposure);
+  right->setExposure(exposure);
+  // left->setGain(gain);
+  // right->setGain(gain);
+  left->setRequestTimeout(1000);
+  right->setRequestTimeout(1000);
 
   // load settings from file and check for completeness
   std::vector<std::string> nodes;
@@ -212,7 +218,6 @@ int main(int argc, char* argv[])
 
   running = true;
   int frame = 0;
-  int disparityCounter = 0;
   while(running)
   {
     stereo.getRectifiedImagepair(s);
@@ -220,11 +225,14 @@ int main(int argc, char* argv[])
     cv::imshow("Left", s.mLeft);
     cv::imshow("Right", s.mRight);
 
-    // mean map storage
-    std::vector<std::vector<float>> v;
-
     if(newDisparityMap)
     {
+      // cut the disparity map in order to ignore the camera shift
+      cv::Rect dMapROI = cv::Rect(cv::Point(numDisp/3,0),
+                                  cv::Point(dMapRaw.cols,dMapRaw.rows));
+      dMapRaw = dMapRaw(dMapROI);
+
+      // clear current subimages and refill the container with new ones
       subimages.clear();
       subdivideImages(dMapRaw, subimages, binning);
 
@@ -296,14 +304,17 @@ int main(int argc, char* argv[])
           left->setExposure(exposure);
           right->setExposure(exposure);
           break;
-        case 'c':
-          {
-            ++disparityCounter;
-            cv::FileStorage f("dMap.yml", cv::FileStorage::WRITE);
-            f << "dMap_" + std::to_string(disparityCounter) << dMapRaw;
-            break;
-          }
+        case 'G':
+          gain += 0.5;
+          left->setGain(gain);          
+          right->setGain(gain);
+          break;
         case 'g':
+          gain -= 0.5;
+          left->setGain(gain);          
+          right->setGain(gain);
+          break;
+        case 'n':
           {
             cv::FileStorage g("newStuff.yml", cv::FileStorage::WRITE);
             g << "Q" << Q_32F;
