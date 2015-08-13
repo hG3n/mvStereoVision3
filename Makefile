@@ -40,6 +40,12 @@ obstacle: directories $(OBJ)
 	@$(CC) $(OBJ) $(TARGETOBJDIR)/obstacle.o -o $(BINDIR)/obstacle $(LIB_PATH) $(LIBS)
 	@echo Linking complete!
 
+obstacleBM: directories $(OBJ)
+	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/obstacleBM.cpp -o $(TARGETOBJDIR)/obstacleBM.o
+	@echo Compiled obstacleBM.cpp successfully!
+	@$(CC) $(OBJ) $(TARGETOBJDIR)/obstacleBM.o -o $(BINDIR)/obstacleBM $(LIB_PATH) $(LIBS)
+	@echo Linking complete!
+
 liveDisparity: directories $(OBJ)
 	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/liveDisparity.cpp -o $(TARGETOBJDIR)/liveDisparity.o
 	@echo Compiled liveDisparity.cpp successfully!
