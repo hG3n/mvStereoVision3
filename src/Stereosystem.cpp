@@ -1,8 +1,8 @@
 #include "Stereosystem.h"
 
 #include "opencv2/opencv.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/calib3d/calib3d.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/calib3d.hpp"
 
 Stereosystem::Stereosystem(Camera* l, Camera* r):
   mLeft(l),
@@ -243,7 +243,6 @@ bool Stereosystem::initRectification()
 
 bool Stereosystem::getRectifiedImagepair(Stereopair& sip)
 {
-
   if(!this->getImagepair(sip))
   {
     return false;
