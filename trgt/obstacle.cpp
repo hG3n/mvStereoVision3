@@ -21,6 +21,7 @@
 #define SAMPLE 3
 
 INITIALIZE_EASYLOGGINGPP
+std::string tag = " Main ";
 bool running = true;
 
 // threading stuff
@@ -30,7 +31,7 @@ std::condition_variable cond_var;
 cv::Ptr<cv::StereoSGBM> disparitySGBM;
 cv::Ptr<cv::StereoBM> disparityBM;
 
-int minDisparity, numDisp, blockSize, speckleWindowSize, speckleRange, disp12MaxDiff, preFilterCap, uniquenessRatio;
+int minDisp, numDisp, blockSize, speckleWindowSize, speckleRange, disp12MaxDiff, preFilterCap, uniquenessRatio;
 int disparityMode;
 bool newDisparityMap = false;
 
@@ -43,12 +44,12 @@ cv::Mat disparityMap_32FC1;
 
 int exposure = 10000;
 float gain = 4.0;
+bool hdr = false;
 
 void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
 {
   while(running)
   {
-
     std::unique_lock<std::mutex> ul(disparityLock);
     cond_var.wait(ul);
     Disparity::sgbm(s, dMapRaw, disparity);
@@ -75,15 +76,14 @@ bool loadDisparityParameters(std::string const filename)
 
   if(success)
   {
-    if(fs["numDisparities"].empty() || fs["blockSize"].empty() || fs["speckleWindowSize"].empty() || fs["speckleWindowRange"].empty())
-    {
+    if(fs["numDisp"].empty() || fs["blockSize"].empty() || fs["speckleWindowSize"].empty() || fs["speckleWindowRange"].empty())    {
       LOG(ERROR) << "Node in " << filename << " is empty" << std::endl;
       fs.release();
       return false;
     }
 
-    fs["minDisparity"]        >> minDisparity;
-    fs["numDisparities"]      >> numDisp;
+    fs["minDisp"]        >> minDisp;
+    fs["numDisp"]      >> numDisp;
     fs["blockSize"]           >> blockSize;
     fs["disp12MaxDiff"]       >> disp12MaxDiff;
     fs["preFilterCap"]        >> preFilterCap;
@@ -92,7 +92,7 @@ bool loadDisparityParameters(std::string const filename)
     fs["speckleWindowRange"]  >> speckleRange;
     fs["mode"]                >> disparityMode;
 
-    disparitySGBM->setMinDisparity(minDisparity);
+    disparitySGBM->setMinDisparity(minDisp);
     disparitySGBM->setNumDisparities(numDisp);
     disparitySGBM->setBlockSize(blockSize);
     disparitySGBM->setPreFilterCap(preFilterCap);
@@ -156,10 +156,8 @@ int main(int argc, char* argv[])
   // reset intial exposure and request timeout in ms
   left->setExposure(exposure);
   right->setExposure(exposure);
-  // left->setGain(gain);
-  // right->setGain(gain);
-  left->setRequestTimeout(1000);
-  right->setRequestTimeout(1000);
+  left->setRequestTimeout(2000);
+  right->setRequestTimeout(2000);
 
   // load settings from file and check for completeness
   std::vector<std::string> nodes;
@@ -180,6 +178,8 @@ int main(int argc, char* argv[])
     return 0;
 
    // create stereo image pair
+  // Stereopair s{cv::Mat{left->getImageHeight(), left->getImageWidth(), CV_8UC1, cv::Scalar::all(0)},
+                // cv::Mat{right->getImageHeight(), right->getImageWidth(), CV_8UC1, cv::Scalar::all(0)}};
   Stereopair s;
 
   char key = 0;
@@ -198,7 +198,7 @@ int main(int argc, char* argv[])
   cv::setMouseCallback("SGBM", mouseClick, NULL);
 
   // create dispparity object and connected thread
-  disparitySGBM = cv::StereoSGBM::create(minDisparity,
+  disparitySGBM = cv::StereoSGBM::create(minDisp,
                                          numDisp,
                                          blockSize,
                                          8*blockSize*blockSize,
@@ -206,7 +206,7 @@ int main(int argc, char* argv[])
   std::thread disparity(disparityCalcSGBM,std::ref(s),std::ref(disparitySGBM));
 
   // load disparity parameters to get intial values
-  if(!loadDisparityParameters("./configs/disparity.yml"))
+  if(!loadDisparityParameters("./configs/sgbm.yml"))
     return 0;
 
   // create subimage container to save created subdivisions
@@ -231,14 +231,14 @@ int main(int argc, char* argv[])
     if(newDisparityMap)
     {
       // cut the disparity map in order to ignore the camera shift
-      cv::Rect dMapROI = cv::Rect(cv::Point(numDisp/3,0),
-                                  cv::Point(dMapRaw.cols,dMapRaw.rows));
-      dMapRaw = dMapRaw(dMapROI);
+      // cv::Rect dMapROI = cv::Rect(cv::Point(numDisp/3,0),
+                                  // cv::Point(dMapRaw.cols,dMapRaw.rows));
+      // dMapRaw = dMapRaw(dMapROI);
 
       // clear current subimages and refill the container with new ones
       subimages.clear();
-      subdivideImages(dMapRaw, subimages, binning);
-      // obst.buildMeanMap(Q_32F, subimages);
+      // subdivideImages(dMapRaw, subimages, binning);
+      // obst.buildMeanDistanceMap(Q_32F, subimages, binning);
 
       // display stuff
       cv::normalize(dMapRaw,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
@@ -270,15 +270,15 @@ int main(int argc, char* argv[])
             binning = 1;
           else
             binning = 0;
-          left->setBinning(binning);
-          right->setBinning(binning);
-          stereo.resetRectification();
+            left->setBinning(binning);
+            right->setBinning(binning);
+            stereo.resetRectification();
           break;
         case 'f':
           std::cout<< left->getFramerate() << " " << right-> getFramerate() <<std::endl;
           break;
         case 'r':
-          loadDisparityParameters("./configs/disparity.yml");
+          loadDisparityParameters("./configs/sgbm.yml");
           break;
         case '0':
           std::cout << obst.getDistanceMapMean()[41] << std::endl;
@@ -303,6 +303,16 @@ int main(int argc, char* argv[])
           left->setGain(gain);          
           right->setGain(gain);
           break;
+        case 'h':
+          if(!hdr){
+            left->enableHDR(Camera::hdr::ENABLE_HDR);
+            right->enableHDR(Camera::hdr::ENABLE_HDR);
+            hdr = true;
+          } else {
+            left->enableHDR(Camera::hdr::DISABLE_HDR);
+            right->enableHDR(Camera::hdr::DISABLE_HDR);
+            hdr = false;
+          }
         case 'n':
           {
             cv::FileStorage g("newStuff.yml", cv::FileStorage::WRITE);
