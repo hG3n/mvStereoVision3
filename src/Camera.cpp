@@ -32,12 +32,14 @@ Camera::Camera(mvIMPACT::acquire::Device* dev):
 	mHeight(0),
 	mBinningMode(binning::BINNING_OFF)
 {
-	LOG(INFO)<< mTag <<"Camera created." << std::endl;
-	this->setPixelFormat(pixelformat::MONO8);
-	this->setExposure(12000);
-	this->setGain(0);
-	std::vector<char> v;
-	this->getImage(v);
+  LOG(INFO)<< mTag <<"Camera created." << std::endl;
+  this->setPixelFormat(pixelformat::MONO8);
+  this->setExposure(12000);
+  this->setGain(0);
+  this->enableAutoExposure(exposure::DISABLE_AUTO_EXP);
+  this->enableAutoGain(gain::DISABLE_GAIN);
+  std::vector<char> v;
+  this->getImage(v);
 }
 
 Camera::~Camera()
@@ -91,17 +93,17 @@ cv::Mat Camera::getDistCoeffs() const
 // -----------------------------------------------------------------------------
 // --- setter ------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Camera::setExposureMode(unsigned int mode)
+void Camera::enableAutoExposure(unsigned int mode)
 {
   switch(mode)
   {
-    case exposure::AUTO_EXPOSURE_OFF:
-      mCameraSettingsBlueFOX.autoExposeControl.write(mvIMPACT::acquire::TAutoExposureControl::aecOff);
-      LOG(INFO) << mTag << "Set Auto Exposure Mode: OFF" << std::endl;
-      break;
-    case exposure::AUTO_EXPOSURE:
+    case exposure::ENABLE_AUTO_EXP:
       mCameraSettingsBlueFOX.autoExposeControl.write(mvIMPACT::acquire::TAutoExposureControl::aecOn);
       LOG(INFO) << mTag << "Set Auto Exposure Mode: ON" << std::endl;
+      break;
+    case exposure::DISABLE_AUTO_EXP:
+      mCameraSettingsBlueFOX.autoExposeControl.write(mvIMPACT::acquire::TAutoExposureControl::aecOff);
+      LOG(INFO) << mTag << "Set Auto Exposure Mode: OFF" << std::endl;
       break;
   }
 }
@@ -110,6 +112,21 @@ void Camera::setExposure(unsigned int exposure)
 {
   mCameraSettingsBlueFOX.expose_us.write(exposure);
   LOG(INFO) << mTag << "Set exposure time to " << exposure << std::endl;
+}
+
+void Camera::enableAutoGain(unsigned int option)
+{
+  switch(option)
+  {
+    case gain::ENABLE_GAIN:
+      mCameraSettingsBlueFOX.autoGainControl.write(mvIMPACT::acquire::TAutoGainControl::agcOn);
+      LOG(INFO) << mTag << "enabled Auto Gain Control!" << std::endl;
+      break;
+    case gain::DISABLE_GAIN:
+      mCameraSettingsBlueFOX.autoGainControl.write(mvIMPACT::acquire::TAutoGainControl::agcOff);
+      LOG(INFO) << mTag << "disabled Auto Gain Control" << std::endl;
+      break;
+  }
 }
 
 void Camera::setGain(float gain)
@@ -174,63 +191,82 @@ void Camera::setPixelClock(int clock)
   mCameraSettingsBlueFOX.pixelClock_KHz.write(mvIMPACT::acquire::cpc40000KHz);
 }
 
+void Camera::enableHDR(int option)
+{
+  switch(option)
+  {
+    case hdr::ENABLE_HDR:
+      mCameraSettingsBlueFOX.getHDRControl().HDREnable.write(mvIMPACT::acquire::TBoolean::bTrue);
+      LOG(INFO) << mTag << "HDR enabled!" << std::endl;
+      break;
+    case hdr::DISABLE_HDR:
+      mCameraSettingsBlueFOX.getHDRControl().HDREnable.write(mvIMPACT::acquire::TBoolean::bFalse);
+      LOG(INFO) << mTag << "HDR disabled!" << std::endl;
+      break;
+  }
+}
+
 // -----------------------------------------------------------------------------
 // --- functions ---------------------------------------------------------------
 // -----------------------------------------------------------------------------
 bool Camera::getImage(std::vector<char> &imageToReturn)
 {
-	int result = DMR_NO_ERROR;
-	//request an image
-	result = mFunctionInterface.imageRequestSingle();
 
-	if(result != DMR_NO_ERROR)
-	{
-		std::cerr << "Error while requesting for image: "<<\
-		mvIMPACT::acquire::ImpactAcquireException::getErrorCodeAsString(result)<<\
-		std::endl;
-		LOG(ERROR)<< mTag << "Error while requesting for image: "<<\
-		mvIMPACT::acquire::ImpactAcquireException::getErrorCodeAsString(result)<<\
-		std::endl;
-		return false;
-	}
+  int result = DMR_NO_ERROR;
+    //request an image
+    result = mFunctionInterface.imageRequestSingle();
 
-	int requestNr = mFunctionInterface.imageRequestWaitFor(mTimeout);
-	if(mFunctionInterface.isRequestNrValid(requestNr))
-	{
-		mRequest = mFunctionInterface.getRequest(requestNr);
+    if(result != DMR_NO_ERROR)
+    {
+      std::cerr << "Error while requesting for image: "<<\
+      mvIMPACT::acquire::ImpactAcquireException::getErrorCodeAsString(result)<<\
+      std::endl;
+      LOG(ERROR)<< mTag << "Error while requesting for image: "<<\
+      mvIMPACT::acquire::ImpactAcquireException::getErrorCodeAsString(result)<<\
+      std::endl;
+      return false;
+    }
 
-		if(mRequest->isOK())
-		{
-			//create vector with image data from request
-			imageToReturn= std::vector<char>(static_cast<char*>(mRequest->imageData.read()),
-									                     static_cast<char*>(mRequest->imageData.read()) +\
-															         mRequest->imageSize.read());
+    int requestNr = mFunctionInterface.imageRequestWaitFor(mTimeout);
+    if(mFunctionInterface.isRequestNrValid(requestNr))
+    {
+      mRequest = mFunctionInterface.getRequest(requestNr);
 
-      // imageToReturn = 
-			mWidth = mRequest->imageWidth.read();
-			mHeight = mRequest->imageHeight.read();
-			mFunctionInterface.imageRequestUnlock(requestNr);
-			return true;
-		}
-		else
-		{
-			std::cerr << "Error, request not OK!" <<std::endl;
-			LOG(ERROR) << mTag << "Error, request not OK!" <<std::endl;
-			return false;
-		}
-	}
-	LOG(ERROR) << mTag << "Error, invalid requestnumber!" << std::endl;
-	mFunctionInterface.imageRequestUnlock(requestNr);
+      if(mRequest->isOK())
+      {
+        //create vector with image data from request
 
-	return false;
+        mWidth = mRequest->imageWidth.read();
+        mHeight = mRequest->imageHeight.read();
+
+        // std::memcpy(mat.ptr(),static_cast<char*>(mRequest->imageData.read()), mRequest->imageSize.read());
+        // mat = cv::Mat(mHeight, mWidth, CV_8UC1, static_cast<char*>(mRequest->imageData.read()));
+        imageToReturn= std::vector<char>(static_cast<char*>(mRequest->imageData.read()),
+                                         static_cast<char*>(mRequest->imageData.read()) +\
+                                         mRequest->imageSize.read());
+
+        mFunctionInterface.imageRequestUnlock(requestNr);
+        return true;
+      }
+      else
+      {
+        std::cerr << "Error, request not OK!" <<std::endl;
+        LOG(ERROR) << mTag << "Error, request not OK!" <<std::endl;
+        return false;
+      }
+    }
+    LOG(ERROR) << mTag << "Error, invalid requestnumber!" << std::endl;
+    mFunctionInterface.imageRequestUnlock(requestNr);
+
+    return false;
 }
 
 double Camera::calibrate(std::vector<cv::Mat> const& images, double patternsize, cv::Size chessboardSize)
 {
   // needed calibration variables
 	std::vector<cv::Mat> rvecs,tvecs;
-	std::vector<std::vector<cv::Point3f> > objectPoints;
-  std::vector<std::vector<cv::Point2f> > imagePoints;
+	std::vector<std::vector<cv::Point3f>> objectPoints;
+  std::vector<std::vector<cv::Point2f>> imagePoints;
   std::vector<cv::Point2f> corners;
   std::vector<cv::Point3f> obj;
 

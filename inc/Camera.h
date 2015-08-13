@@ -16,8 +16,10 @@ class Camera
   public:
   // enums
   enum pixelformat {MONO8, MONO16};
-  enum binning {BINNING_OFF, BINNING_HV};
-  enum exposure {AUTO_EXPOSURE_OFF, AUTO_EXPOSURE};
+  enum binning     {BINNING_OFF, BINNING_HV};
+  enum exposure    {ENABLE_AUTO_EXP, DISABLE_AUTO_EXP};
+  enum hdr         {ENABLE_HDR, DISABLE_HDR, MODE1, MODE2};
+  enum gain        {ENABLE_GAIN, DISABLE_GAIN};
 
   //Constructor, Destructor
   Camera();
@@ -35,14 +37,16 @@ class Camera
   cv::Mat       getDistCoeffs()   const;
 
   //Setter
-  void      setExposureMode(unsigned int);
-  void      setExposure(unsigned int);
-  void      setGain(float);
-  void      setPixelFormat(int);
-  void      setBinning(unsigned int);
-  void      setIntrinsic(cv::Mat);
-  void      setRequestTimeout(int);
-  void      setPixelClock(int);
+  void enableAutoExposure(unsigned int);
+  void setExposure(unsigned int);
+  void enableAutoGain(unsigned int);
+  void setGain(float);
+  void setPixelFormat(int);
+  void setBinning(unsigned int);
+  void setIntrinsic(cv::Mat);
+  void setRequestTimeout(int);
+  void setPixelClock(int);
+  void enableHDR(int);
 
   //Functions
   bool        getImage(std::vector<char>&);
