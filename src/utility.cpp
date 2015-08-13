@@ -16,8 +16,8 @@ Stereopair::Stereopair(cv::Mat &l , cv::Mat &r):
 	mLeft(l),
 	mRight(r),
   mTag("STEREOPAIR\t")
-
 {}
+
 Stereopair::~Stereopair()
 {
   mLeft.release();
@@ -112,7 +112,7 @@ bool Utility::initCameras(mvIMPACT::acquire::DeviceManager &devMgr, Camera *&lef
   {
     if(devMgr[1]->serial.read() == "26803878")
     {
-      LOG(INFO)<< mTag << "Successfully initilized both camers" <<std::endl;
+      LOG(INFO)<< mTag << "Successfully initialized both camers" <<std::endl;
 
       left = new Camera(devMgr[1]);
       right = new Camera(devMgr[0]);
