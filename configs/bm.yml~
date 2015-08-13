@@ -1,0 +1,8 @@
+%YAML:1.0
+numDisp: 128
+blockSize: 21
+preFilterCap: 2
+preFilterSize: 51
+uniquenessRatio: 0
+textureThreshold: 30
+
