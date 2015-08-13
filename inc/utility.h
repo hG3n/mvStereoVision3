@@ -31,6 +31,7 @@ struct Stereopair
 {
 	Stereopair();
 	Stereopair(cv::Mat &, cv::Mat &);
+	Stereopair(cv::Mat &&, cv::Mat &&);
 	~Stereopair();
 
 	cv::Mat mLeft;
@@ -70,7 +71,6 @@ namespace Utility
   float									 calcStdDev(cv::Mat const&);
 
   void subdivideImage(cv::Mat const&, int, std::vector<cv::Mat>&);
-
 }
 
 #endif //__UTILITY__H__
