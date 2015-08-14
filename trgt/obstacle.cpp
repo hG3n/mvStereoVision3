@@ -37,6 +37,7 @@ bool newDisparityMap = false;
 
 cv::Mat dMapRaw;
 cv::Mat dMapNorm;
+cv::Mat dMapWork;
 
 cv::Mat Q, Q_32F;
 cv::Mat R, R_32F;
@@ -54,7 +55,7 @@ void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
     cond_var.wait(ul);
     Disparity::sgbm(s, dMapRaw, disparity);
     dMapRaw.convertTo(disparityMap_32FC1,CV_32FC1);
-    newDisparityMap=true;
+    newDisparityMap = true;
   }
 }
 
@@ -82,8 +83,8 @@ bool loadDisparityParameters(std::string const filename)
       return false;
     }
 
-    fs["minDisp"]        >> minDisp;
-    fs["numDisp"]      >> numDisp;
+    fs["minDisp"]             >> minDisp;
+    fs["numDisp"]             >> numDisp;
     fs["blockSize"]           >> blockSize;
     fs["disp12MaxDiff"]       >> disp12MaxDiff;
     fs["preFilterCap"]        >> preFilterCap;
@@ -134,6 +135,29 @@ void subdivideImages(cv::Mat const& dMap, std::vector<std::vector<cv::Mat>> &sub
     Utility::subdivideImage(temp[i], binning, temp2);
     subimages.push_back(temp2);
   }
+}
+
+std::string type2str(int type) {
+  std::string r;
+
+  uchar depth = type & CV_MAT_DEPTH_MASK;
+  uchar chans = 1 + (type >> CV_CN_SHIFT);
+
+  switch ( depth ) {
+    case CV_8U:  r = "8U"; break;
+    case CV_8S:  r = "8S"; break;
+    case CV_16U: r = "16U"; break;
+    case CV_16S: r = "16S"; break;
+    case CV_32S: r = "32S"; break;
+    case CV_32F: r = "32F"; break;
+    case CV_64F: r = "64F"; break;
+    default:     r = "User"; break;
+  }
+
+  r += "C";
+  r += (chans+'0');
+
+  return r;
 }
 
 int main(int argc, char* argv[])
@@ -197,7 +221,7 @@ int main(int argc, char* argv[])
   cv::namedWindow("SGBM" ,1);
   cv::setMouseCallback("SGBM", mouseClick, NULL);
 
-  // create dispparity object and connected thread
+  // create disparity object and connected thread
   disparitySGBM = cv::StereoSGBM::create(minDisp,
                                          numDisp,
                                          blockSize,
@@ -231,17 +255,17 @@ int main(int argc, char* argv[])
     if(newDisparityMap)
     {
       // cut the disparity map in order to ignore the camera shift
-      // cv::Rect dMapROI = cv::Rect(cv::Point(numDisp/3,0),
-                                  // cv::Point(dMapRaw.cols,dMapRaw.rows));
-      // dMapRaw = dMapRaw(dMapROI);
+      // cv::Rect dMapROI_debug = cv::Rect(cv::Point(0,0),cv::Point(dMapRaw.cols,dMapRaw.rows));
+      cv::Rect dMapROI = cv::Rect(cv::Point(numDisp/3+blockSize,0),cv::Point(dMapRaw.cols,dMapRaw.rows));
+      dMapWork = dMapRaw(dMapROI);
 
       // clear current subimages and refill the container with new ones
-      subimages.clear();
+      // subimages.clear();
       // subdivideImages(dMapRaw, subimages, binning);
       // obst.buildMeanDistanceMap(Q_32F, subimages, binning);
 
       // display stuff
-      cv::normalize(dMapRaw,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
+      cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
       cv::cvtColor(dMapNorm,dMapNorm,CV_GRAY2BGR);
       // View::drawObstacleGrid(dMapNorm, binning);
       // View::drawSubimageGrid(dMapNorm, binning);
@@ -266,14 +290,16 @@ int main(int argc, char* argv[])
           running = false;
           break;
         case 'b':
+        {
           if (binning == 0)
             binning = 1;
           else
             binning = 0;
-            left->setBinning(binning);
-            right->setBinning(binning);
-            stereo.resetRectification();
+          left->setBinning(binning);
+          right->setBinning(binning);
+          stereo.resetRectification();
           break;
+        }
         case 'f':
           std::cout<< left->getFramerate() << " " << right-> getFramerate() <<std::endl;
           break;
@@ -315,11 +341,14 @@ int main(int argc, char* argv[])
           }
         case 'n':
           {
-            cv::FileStorage g("newStuff.yml", cv::FileStorage::WRITE);
+            cv::FileStorage g("afterCalibrationParameters.yml", cv::FileStorage::WRITE);
             g << "Q" << Q_32F;
             g << "K_L" << stereo.getNewKMats()[0];
             g << "K_R" << stereo.getNewKMats()[1];
           }
+        case 't':
+          std::cout << type2str(dMapRaw.type()) << std::endl;
+          break;
         default:
           std::cout << "Key pressed has no action" << std::endl;
           break;
