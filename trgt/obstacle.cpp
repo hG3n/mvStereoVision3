@@ -233,6 +233,9 @@ int main(int argc, char* argv[])
   if(!loadDisparityParameters("./configs/sgbm.yml"))
     return 0;
 
+  // create empty rect to use later as disparity ROI
+  cv::Rect dMapROI;
+
   // create subimage container to save created subdivisions
   std::vector<std::vector<cv::Mat>> subimages;
   subimages.reserve(9);
@@ -256,7 +259,11 @@ int main(int argc, char* argv[])
     {
       // cut the disparity map in order to ignore the camera shift
       // cv::Rect dMapROI_debug = cv::Rect(cv::Point(0,0),cv::Point(dMapRaw.cols,dMapRaw.rows));
-      cv::Rect dMapROI = cv::Rect(cv::Point(numDisp/3+blockSize,0),cv::Point(dMapRaw.cols,dMapRaw.rows));
+      if(binning == 0)
+        dMapROI = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(dMapRaw.cols,dMapRaw.rows));
+      else
+        dMapROI = cv::Rect(cv::Point((numDisp/3+blockSize)/2,0),cv::Point(dMapRaw.cols,dMapRaw.rows));
+
       dMapWork = dMapRaw(dMapROI);
 
       // clear current subimages and refill the container with new ones
@@ -357,6 +364,12 @@ int main(int argc, char* argv[])
     ++frame;
   }
 
+  // release matrices 
+  dMapRaw.release();
+  dMapNorm.release();
+  dMapWork.release();
+
+  // end the disparity thread
   disparity.join();
   return 0;
 }
