@@ -39,8 +39,10 @@ class Camera
   //Setter
   void enableAutoExposure(unsigned int);
   void setExposure(unsigned int);
+
   void enableAutoGain(unsigned int);
   void setGain(float);
+  
   void setPixelFormat(int);
   void setBinning(unsigned int);
   void setIntrinsic(cv::Mat);
