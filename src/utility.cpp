@@ -255,7 +255,7 @@ float Utility::calcMeanDisparity(cv::Mat const& matrix)
   int total = 0;
   int numElements = 0;
 
-  std::for_each(matrix.begin<float>(), matrix.end<float>(), [&numElements, &total](float value) {
+  std::for_each(matrix.begin<short>(), matrix.end<short>(), [&numElements, &total](short value) {
     if(value > 1) {
       total += value;
       ++numElements;
