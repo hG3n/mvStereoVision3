@@ -37,7 +37,7 @@ bool newDisparityMap = false;
 
 cv::Mat dMapRaw;
 cv::Mat dMapNorm;
-cv::Mat dMapWork;
+cv::Mat dMapWork(480, 752, CV_32F);
 
 cv::Mat Q, Q_32F;
 cv::Mat R, R_32F;
@@ -160,6 +160,20 @@ std::string type2str(int type) {
   return r;
 }
 
+void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b, bool reload = false)
+{
+  // if the function has its initial run precalculate the roi dimensions
+  // else just use reference values for creation
+  if(!reload) {
+    roi_u = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
+    roi_b = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols/2,reference.rows/2));
+  } else {
+    roi_u = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
+    roi_b = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
+  }
+
+}
+
 int main(int argc, char* argv[])
 {
   std::string tag = "MAIN\t";
@@ -233,8 +247,11 @@ int main(int argc, char* argv[])
   if(!loadDisparityParameters("./configs/sgbm.yml"))
     return 0;
 
-  // create empty rect to use later as disparity ROI
-  cv::Rect dMapROI;
+  // pre create the rois for binned and unbinned mode
+  // cv::Rect dMapROI_u = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(dMapWork.cols,dMapWork.rows));
+  // cv::Rect dMapROI_b = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(dMapWork.cols/2,dMapWork.rows/2));
+  cv::Rect dMapROI_b, dMapROI_u;
+  createDMapROIS(dMapWork, dMapROI_u, dMapROI_b);
 
   // create subimage container to save created subdivisions
   std::vector<std::vector<cv::Mat>> subimages;
@@ -242,6 +259,7 @@ int main(int argc, char* argv[])
 
   // init obstacle detection
   obstacleDetection obst;
+  std::vector<float> distanceMap;
 
   running = true;
   int frame = 0;
@@ -257,19 +275,26 @@ int main(int argc, char* argv[])
 
     if(newDisparityMap)
     {
-      // cut the disparity map in order to ignore the camera shift
-      // cv::Rect dMapROI_debug = cv::Rect(cv::Point(0,0),cv::Point(dMapRaw.cols,dMapRaw.rows));
-      if(binning == 0)
-        dMapROI = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(dMapRaw.cols,dMapRaw.rows));
-      else
-        dMapROI = cv::Rect(cv::Point((numDisp/3+blockSize)/2,0),cv::Point(dMapRaw.cols,dMapRaw.rows));
 
-      dMapWork = dMapRaw(dMapROI);
+      // std::cout << "cols :" << dMapRaw.cols << " x rows: " << dMapRaw.rows << std::endl;
+      printf("binning: %i cols: %i rows: %i \n",binning, dMapRaw.cols, dMapRaw.rows );
+
+      // cut the disparity map in order to ignore the camera shift
+      // camera shift is roughly calculated by a third of numDisparity
+      // added up with the used blocksize
+      // cv::Rect dMapROI_debug = cv::Rect(cv::Point(0,0),cv::Point(dMapRaw.cols,dMapRaw.rows));
+      if(binning == 0) {
+        dMapRaw.convertTo(dMapWork, CV_32F);
+        dMapWork = dMapRaw(dMapROI_u);
+      } else if (binning == 1) {
+        dMapRaw.convertTo(dMapWork, CV_32F);
+        dMapWork = dMapRaw(dMapROI_b);
+      }
 
       // clear current subimages and refill the container with new ones
-      // subimages.clear();
-      // subdivideImages(dMapRaw, subimages, binning);
-      // obst.buildMeanDistanceMap(Q_32F, subimages, binning);
+      subimages.clear();
+      subdivideImages(dMapWork, subimages, binning);
+      obst.buildMeanDistanceMap(Q_32F, subimages, binning);
 
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
