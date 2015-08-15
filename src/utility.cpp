@@ -212,7 +212,7 @@ float Utility::calcDistance(cv::Mat const& Q, float const& dispValue, int binnin
     float distance = coordinateQ(2)/1000;
     coordinateQ.release();
 
-    return distance * 2;
+    return distance;
   }
   else
   {
