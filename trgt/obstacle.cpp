@@ -162,6 +162,9 @@ std::string type2str(int type) {
 
 void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b, bool reload = false)
 {
+  /* TODO:
+     add correct roi size after reloading disparity parameters
+  */
   // if the function has its initial run precalculate the roi dimensions
   // else just use reference values for creation
   if(!reload) {
@@ -171,7 +174,6 @@ void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b,
     roi_u = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
     roi_b = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
   }
-
 }
 
 int main(int argc, char* argv[])
