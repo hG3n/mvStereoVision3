@@ -169,7 +169,7 @@ void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b,
   // else just use reference values for creation
   if(!reload) {
     roi_u = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
-    roi_b = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols/2,reference.rows/2));
+    roi_b = cv::Rect(cv::Point((numDisp/3+blockSize)/2,0),cv::Point(reference.cols/2,reference.rows/2));
   } else {
     roi_u = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
     roi_b = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
@@ -277,9 +277,7 @@ int main(int argc, char* argv[])
 
     if(newDisparityMap)
     {
-
-      // std::cout << "cols :" << dMapRaw.cols << " x rows: " << dMapRaw.rows << std::endl;
-      printf("binning: %i cols: %i rows: %i \n",binning, dMapRaw.cols, dMapRaw.rows );
+      // printf("binning: %i cols: %i rows: %i \n",binning, dMapRaw.cols, dMapRaw.rows );
 
       // cut the disparity map in order to ignore the camera shift
       // camera shift is roughly calculated by a third of numDisparity
@@ -372,6 +370,7 @@ int main(int argc, char* argv[])
             left->enableHDR(Camera::hdr::DISABLE_HDR);
             right->enableHDR(Camera::hdr::DISABLE_HDR);
             hdr = false;
+            break;
           }
         case 'n':
           {
@@ -379,6 +378,7 @@ int main(int argc, char* argv[])
             g << "Q" << Q_32F;
             g << "K_L" << stereo.getNewKMats()[0];
             g << "K_R" << stereo.getNewKMats()[1];
+            break;
           }
         case 't':
           std::cout << type2str(dMapRaw.type()) << std::endl;
