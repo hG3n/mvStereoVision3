@@ -90,7 +90,13 @@ void obstacleDetection::buildStdDevDistanceMap(cv::Mat const& Q, std::vector<std
 // -----------------------------------------------------------------------------
 void obstacleDetection::detectObstacles(int const& mode, std::pair<float,float> const& threshold)
 {
-    
-    
-
+  if(mode == MODE::MEAN_DISTANCE) {
+    int i = 0;
+    std::for_each(mDistanceMapMean.begin(), mDistanceMapMean.end(), [threshold, &i](float value) {
+      if(value >= threshold.first && value <= threshold.second) {
+        std::cout << "obstacle in: " << i << std::endl;
+      }
+      ++i;
+    });
+  }
 }

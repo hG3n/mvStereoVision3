@@ -15,7 +15,9 @@ class obstacleDetection
   public:
 
   // mode enum
-  enum mode {MEAN_DISTANCE, SAMPLEPOINTS, NOISEMAP};
+  enum MODE {MEAN_DISTANCE, SAMPLEPOINTS};
+  // std::map<int,std::string> positions = {0, ""};
+
 
   obstacleDetection();
   obstacleDetection(cv::Mat const&, int);
