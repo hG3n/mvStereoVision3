@@ -15,11 +15,6 @@
 #include <mutex>
 #include <condition_variable>
 
-#define MEAN_DISTANCE 0
-#define MIN_DISTANCE 1
-#define STDDEV 2
-#define SAMPLE 3
-
 INITIALIZE_EASYLOGGINGPP
 std::string tag = " Main ";
 bool running = true;
@@ -339,7 +334,7 @@ int main(int argc, char* argv[])
           loadDisparityParameters("./configs/sgbm.yml");
           break;
         case '0':
-          std::cout << obst.getDistanceMapMean()[41] << std::endl;
+          obst.detectObstacles(0, std::make_pair(0.8, 1.2));
           break;
         case 'E':
           exposure += 1000;
