@@ -294,8 +294,8 @@ int main(int argc, char* argv[])
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
       cv::cvtColor(dMapNorm,dMapNorm,CV_GRAY2BGR);
-      // View::drawObstacleGrid(dMapNorm, binning);
-      // View::drawSubimageGrid(dMapNorm, binning);
+      View::drawObstacleGrid(dMapNorm, binning);
+      View::drawSubimageGrid(dMapNorm, binning);
       cv::imshow("SGBM",dMapNorm);
       newDisparityMap = false;
     }
