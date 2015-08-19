@@ -129,6 +129,7 @@ void obstacleDetection::detectObstacles(int const& mode, std::pair<float,float> 
 {
   if(mode == MODE::MEAN_DISTANCE) {
     int i = 0;
+    // analyzes each element in the mean vector, printing location of found obstacles
     std::for_each(mDistanceMapMean.begin(), mDistanceMapMean.end(), [threshold, &i, this](float value) {
       if(value >= threshold.first && value <= threshold.second) {
         std::cout << "obstacle in: " << mPositions[i] << std::endl;
