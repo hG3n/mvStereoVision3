@@ -335,6 +335,7 @@ int main(int argc, char* argv[])
           break;
         case '0':
           obst.detectObstacles(0, std::make_pair(0.8, 1.2));
+          std::cout << "" << std::endl;
           break;
         case 'E':
           exposure += 1000;
