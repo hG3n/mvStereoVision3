@@ -16,11 +16,8 @@ class obstacleDetection
 
   // mode enum
   enum MODE {MEAN_DISTANCE, SAMPLEPOINTS};
-  // std::map<int,std::string> positions = {0, ""};
-
 
   obstacleDetection();
-  obstacleDetection(cv::Mat const&, int);
   ~obstacleDetection();
 
   // getter
@@ -44,6 +41,7 @@ class obstacleDetection
   std::vector<float>          mDistanceMapMin;
   std::vector<float>          mDistanceMapStdDev;
   std::vector<float>          mMeanMap;
+  std::map<int, std::string>  mPositions;
 };
 
 #endif //__OBSTACLE_DETECION__H
