@@ -2,20 +2,19 @@
 #define __Samplepoint_hpp__
 
 #include "opencv2/core.hpp"
+#include "utility.h"
 
-class Samplepoint
+struct Samplepoint
 {
-public:
-  Samplepoint();
   Samplepoint(cv::Point, int);
   ~Samplepoint();
 
-  float getSamplepointValue() const;
+  void calculateSamplepointValue(cv::Mat const&);
 
-private:
-  cv::Point   mCenterPoint;
-  int         mRadius;
-  cv::Mat     mMatrix;
+  // member
+  cv::Point   center;
+  int         radius;
+  float       value;
 };
 
 #endif //__Samplepoint_hpp__

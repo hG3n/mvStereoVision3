@@ -10,6 +10,7 @@
 #include "easylogging++.h"
 #include "obstacleDetection.h"
 #include "view.h"
+#include "Samplepoint.h"
 
 #include <thread>
 #include <mutex>
