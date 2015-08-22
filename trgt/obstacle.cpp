@@ -30,6 +30,9 @@ cv::Ptr<cv::StereoBM> disparityBM;
 int minDisp, numDisp, blockSize, speckleWindowSize, speckleRange, disp12MaxDiff, preFilterCap, uniquenessRatio;
 int disparityMode;
 bool newDisparityMap = false;
+bool reload = false;
+
+// cv::Size imageSize(752, 480);
 
 cv::Mat dMapRaw;
 cv::Mat dMapNorm;
@@ -156,20 +159,28 @@ std::string type2str(int type) {
   return r;
 }
 
-void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b, bool reload = false)
+void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b, int binning, bool reload = false)
 {
   /* TODO:
-     add correct roi size after reloading disparity parameters
+      FIX THE STILL THERE RELOAD BUG
   */
-  // if the function has its initial run precalculate the roi dimensions
-  // else just use reference values for creation
+
+  int pixelShift = numDisp/3+blockSize;
+  if(pixelShift % 2 == 1)
+    pixelShift = pixelShift + 1;
+
   if(!reload) {
-    roi_u = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
-    roi_b = cv::Rect(cv::Point((numDisp/3+blockSize)/2,0),cv::Point(reference.cols/2,reference.rows/2));
+    roi_u = cv::Rect(cv::Point((pixelShift),0),cv::Point(reference.cols,reference.rows));
+    roi_b = cv::Rect(cv::Point((pixelShift)/2,0),cv::Point(reference.cols/2,reference.rows/2));
   } else {
-    roi_u = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
-    roi_b = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
-  }
+    if(binning == 1) {
+      roi_u = cv::Rect(cv::Point((numDisp/3+blockSize)/2,0),cv::Point(reference.cols/2,reference.rows/2));
+      roi_b = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
+    } else {
+      roi_u = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
+      roi_b = cv::Rect(cv::Point((numDisp/3+blockSize)*2,0),cv::Point(reference.cols*2,reference.rows*2));
+    }
+  } 
 }
 
 int main(int argc, char* argv[])
@@ -246,10 +257,8 @@ int main(int argc, char* argv[])
     return 0;
 
   // pre create the rois for binned and unbinned mode
-  // cv::Rect dMapROI_u = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(dMapWork.cols,dMapWork.rows));
-  // cv::Rect dMapROI_b = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(dMapWork.cols/2,dMapWork.rows/2));
   cv::Rect dMapROI_b, dMapROI_u;
-  createDMapROIS(dMapWork, dMapROI_u, dMapROI_b);
+  createDMapROIS(dMapWork, dMapROI_u, dMapROI_b, 0);
 
   // create subimage container to save created subdivisions
   std::vector<std::vector<cv::Mat>> subimages;
@@ -278,7 +287,14 @@ int main(int argc, char* argv[])
       // cut the disparity map in order to ignore the camera shift
       // camera shift is roughly calculated by a third of numDisparity
       // added up with the used blocksize
-      // cv::Rect dMapROI_debug = cv::Rect(cv::Point(0,0),cv::Point(dMapRaw.cols,dMapRaw.rows));
+      if(reload) {
+        createDMapROIS(dMapRaw, dMapROI_u, dMapROI_b, binning, reload);
+        // std::cout << "recreated rois" << std::endl;
+        // std::cout << "binned roi:   " << dMapROI_b << std::endl;
+        // std::cout << "unbinned roi: " << dMapROI_u << std::endl;
+        reload = false;
+      }
+
       if(binning == 0) {
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_u);
@@ -288,9 +304,14 @@ int main(int argc, char* argv[])
       }
 
       // clear current subimages and refill the container with new ones
-      subimages.clear();
-      subdivideImages(dMapWork, subimages, binning);
-      obst.buildMeanDistanceMap(Q_32F, subimages, binning);
+      // subimages.clear();
+      // subdivideImages(dMapWork, subimages, binning);
+      // obst.buildMeanDistanceMap(Q_32F, subimages, binning);
+
+      // int c = dMapWork.cols/2;
+      // int r = dMapWork.rows/2;
+      // Samplepoint s(cv::Point(c,r), 1);
+      // s.calculateSamplepointValue(dMapWork);
 
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
@@ -333,9 +354,11 @@ int main(int argc, char* argv[])
           break;
         case 'r':
           loadDisparityParameters("./configs/sgbm.yml");
+          reload = true;
           break;
         case '0':
           obst.detectObstacles(0, std::make_pair(0.8, 1.2));
+          reload = true;
           std::cout << "" << std::endl;
           break;
         case 'E':
@@ -363,23 +386,33 @@ int main(int argc, char* argv[])
             left->enableHDR(Camera::hdr::ENABLE_HDR);
             right->enableHDR(Camera::hdr::ENABLE_HDR);
             hdr = true;
+            break;
           } else {
             left->enableHDR(Camera::hdr::DISABLE_HDR);
             right->enableHDR(Camera::hdr::DISABLE_HDR);
             hdr = false;
             break;
           }
+        case 's':
+          std::cout << dMapWork.size() << std::endl;
+          break;
         case 'n':
+        {
+          cv::FileStorage g("afterCalibrationParameters.yml", cv::FileStorage::WRITE);
+          g << "Q" << Q_32F;
+          g << "K_L" << stereo.getNewKMats()[0];
+          g << "K_R" << stereo.getNewKMats()[1];
+          break;
+        }
+        case 'd':
           {
-            cv::FileStorage g("afterCalibrationParameters.yml", cv::FileStorage::WRITE);
-            g << "Q" << Q_32F;
-            g << "K_L" << stereo.getNewKMats()[0];
-            g << "K_R" << stereo.getNewKMats()[1];
+            int c = dMapWork.cols/2;
+            int r = dMapWork.rows/2;
+            Samplepoint s(cv::Point(c,r), 1);
+            s.calculateSamplepointValue(dMapWork);
+            std::cout << dMapWork.at<short>(r,c) << std::endl;
             break;
           }
-        case 't':
-          std::cout << type2str(dMapRaw.type()) << std::endl;
-          break;
         default:
           std::cout << "Key pressed has no action" << std::endl;
           break;
