@@ -1,7 +1,7 @@
 %YAML:1.0
 minDisp: 0
 numDisp: 144
-blockSize: 21
+blockSize: 19
 disp12MaxDiff: 0
 preFilterCap: 0
 uniquenessRatio: 0
