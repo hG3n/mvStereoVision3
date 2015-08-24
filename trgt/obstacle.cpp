@@ -189,6 +189,21 @@ void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b,
   } 
 }
 
+void createSamplepointArray(std::vector<Samplepoint>& toFill, cv::Mat const& reference)
+{
+  int distanceX = reference.cols/8;
+  int distanceY = reference.rows/8;
+
+  for (int c = 1; c < reference.cols/8-1; ++c)
+  {
+    for (int r = 1; r < reference.rows/8-1; ++r)
+    {
+      toFill.push_back(Samplepoint(cv::Point(c*distanceX, r*distanceY), 2));
+    }
+  }
+
+}
+
 int main(int argc, char* argv[])
 {
   std::string tag = "MAIN\t";
@@ -274,6 +289,11 @@ int main(int argc, char* argv[])
   obstacleDetection obst;
   std::vector<float> distanceMap;
 
+  // test samplepoint distribution
+  cv::Mat foo = dMapWork(dMapROI_u);
+  std::vector<Samplepoint> samplepoint_storage;
+  createSamplepointArray(samplepoint_storage, dMapWork);
+
   running = true;
   int frame = 0;
   while(running)
@@ -308,6 +328,16 @@ int main(int argc, char* argv[])
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_b);
       }
+
+      std::cout << samplepoint_storage.size() << std::endl;
+      std::for_each(samplepoint_storage.begin(), samplepoint_storage.end(), [](Samplepoint s){
+        std::cout << s.center << std::endl;
+      });
+
+      // display samplepoint for debug purpose
+      // std::for_each(samplepoint_storage.begin(), samplepoint_storage.end(), [](Samplepoint s){
+      //   std::cout << s.center << std::endl;
+      // });
 
       // clear current subimages and refill the container with new ones
       // subimages.clear();
