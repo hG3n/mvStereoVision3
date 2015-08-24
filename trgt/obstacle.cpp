@@ -31,6 +31,7 @@ int minDisp, numDisp, blockSize, speckleWindowSize, speckleRange, disp12MaxDiff,
 int disparityMode;
 bool newDisparityMap = false;
 bool reload = false;
+bool view = true;
 
 // cv::Size imageSize(752, 480);
 
@@ -165,9 +166,14 @@ void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b,
       FIX THE STILL THERE RELOAD BUG
   */
 
-  int pixelShift = numDisp/3+blockSize;
-  if(pixelShift % 2 == 1)
+  // the best value to work with in order to include everything and dont exclude important work
+  int pixelShift = numDisp / 2;
+  if(pixelShift % 2 == 1) {
     pixelShift = pixelShift + 1;
+    if((reference.cols - pixelShift) % 8 != 0) {
+      pixelShift = pixelShift + (reference.cols - pixelShift % 8);
+    }
+  }
 
   if(!reload) {
     roi_u = cv::Rect(cv::Point((pixelShift),0),cv::Point(reference.cols,reference.rows));
@@ -308,16 +314,18 @@ int main(int argc, char* argv[])
       // subdivideImages(dMapWork, subimages, binning);
       // obst.buildMeanDistanceMap(Q_32F, subimages, binning);
 
-      // int c = dMapWork.cols/2;
-      // int r = dMapWork.rows/2;
-      // Samplepoint s(cv::Point(c,r), 1);
+      // int c = dMapWork.cols / 2;
+      // int r = dMapWork.rows / 2;
+      // Samplepoint s(cv::Point(c,r), 2);
       // s.calculateSamplepointValue(dMapWork);
 
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
       cv::cvtColor(dMapNorm,dMapNorm,CV_GRAY2BGR);
-      View::drawObstacleGrid(dMapNorm, binning);
-      View::drawSubimageGrid(dMapNorm, binning);
+      if(view) {
+        View::drawSubimageGrid(dMapNorm, binning);
+        View::drawObstacleGrid(dMapNorm, binning);
+      }
       cv::imshow("SGBM",dMapNorm);
       newDisparityMap = false;
     }
@@ -395,6 +403,9 @@ int main(int argc, char* argv[])
           }
         case 's':
           std::cout << dMapWork.size() << std::endl;
+          // std::cout << (dMapWork.cols + (8-(dMapWork.cols % 8))) % 8 << std::endl;
+          std::cout << dMapWork.cols%8 << std::endl;
+          std::cout << dMapWork.rows%8 << std::endl;
           break;
         case 'n':
         {
@@ -412,6 +423,13 @@ int main(int argc, char* argv[])
             s.calculateSamplepointValue(dMapWork);
             std::cout << dMapWork.at<short>(r,c) << std::endl;
             break;
+          }
+        case 'v':
+          {
+            if(view)
+              view = false;
+            else
+              view = true;          
           }
         default:
           std::cout << "Key pressed has no action" << std::endl;
