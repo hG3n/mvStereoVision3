@@ -1,10 +1,10 @@
 %YAML:1.0
-minDisp: 0
+minDisp: 1
 numDisp: 144
-blockSize: 19
+blockSize: 21
 disp12MaxDiff: 0
 preFilterCap: 0
 uniquenessRatio: 0
-speckleWindowSize: 100
+speckleWindowSize: 150
 speckleWindowRange: 2
 mode: 0
