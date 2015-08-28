@@ -12,17 +12,13 @@ Samplepoint::~Samplepoint()
 // -----------------------------------------------------------------------------
 // --- calculations ------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void Samplepoint::calculateSamplepointValue(cv::Mat & dMap)
+void Samplepoint::calculateSamplepointValue(cv::Mat const& dMap)
 { 
   if(radius > 0)
   {
-
     cv::Point p1(center.x - radius, center.y - radius);
     cv::Point p2(center.x + radius + 1, center.y + radius + 1);
-    
     cv::Rect roi(p1,p2);
-
-    cv::rectangle(dMap, p1, p2, cv::Scalar(255,0,0));
 
     cv::Mat temp = dMap(roi);
     value = Utility::calcMeanDisparity(temp);
@@ -31,4 +27,11 @@ void Samplepoint::calculateSamplepointValue(cv::Mat & dMap)
   {
     value = dMap.at<short>(center.x, center.y);
   }
+}
+
+void Samplepoint::drawSamplepoints(cv::Mat& dMap)
+{
+  cv::Point p1(center.x - radius, center.y - radius);
+  cv::Point p2(center.x + radius + 1, center.y + radius + 1);
+  cv::rectangle(dMap, p1, p2, cv::Scalar(255,0,0));
 }
