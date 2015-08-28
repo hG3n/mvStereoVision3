@@ -22,7 +22,6 @@ void Samplepoint::calculateSamplepointValue(cv::Mat & dMap)
     
     cv::Rect roi(p1,p2);
 
-    // std::cout << roi << std::endl;
     cv::rectangle(dMap, p1, p2, cv::Scalar(255,0,0));
 
     cv::Mat temp = dMap(roi);
