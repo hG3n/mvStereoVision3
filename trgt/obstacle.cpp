@@ -31,7 +31,7 @@ int minDisp, numDisp, blockSize, speckleWindowSize, speckleRange, disp12MaxDiff,
 int disparityMode;
 bool newDisparityMap = false;
 bool reload = false;
-bool view = true;
+int view;
 
 // cv::Size imageSize(752, 480);
 
@@ -202,7 +202,7 @@ void createSamplepointArray(std::vector<Samplepoint>& toFill, cv::Mat const& ref
     for (int r = 1; r < distanceY; ++r)
     { 
       std::cout << "c: " << c << " r: " << r << std::endl;
-      toFill.push_back(Samplepoint(cv::Point(c*(reference.cols/distanceX), r*(reference.rows/distanceY)), 2));
+      toFill.push_back(Samplepoint(cv::Point(c*(reference.cols/distanceX), r*(reference.rows/distanceY)), 1));
     }
   }
 }
@@ -333,15 +333,7 @@ int main(int argc, char* argv[])
       }
 
       // calculate samplepoint value and draw samplepoints
-      if(binning == 0) {
-        std::for_each(samplepoint_storage_u.begin(), samplepoint_storage_u.end(), [](Samplepoint s){
-          s.calculateSamplepointValue(dMapWork);
-        });
-      } else {
-        std::for_each(samplepoint_storage_b.begin(), samplepoint_storage_b.end(), [](Samplepoint s){
-          s.calculateSamplepointValue(dMapWork);
-        });
-      }
+      
 
       // display samplepoint for debug purpose
       // std::for_each(samplepoint_storage.begin(), samplepoint_storage.end(), [](Samplepoint s){
@@ -353,29 +345,36 @@ int main(int argc, char* argv[])
       // subdivideImages(dMapWork, subimages, binning);
       // obst.buildMeanDistanceMap(Q_32F, subimages, binning);
 
-      // int c = dMapWork.cols / 2;
-      // int r = dMapWork.rows / 2;
-      // Samplepoint s(cv::Point(c,r), 2);
-      // s.calculateSamplepointValue(dMapWork);
-
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
       cv::cvtColor(dMapNorm,dMapNorm,CV_GRAY2BGR);
 
-      if(binning == 0) {
-        std::for_each(samplepoint_storage_u.begin(), samplepoint_storage_u.end(), [](Samplepoint s){
-          s.calculateSamplepointValue(dMapNorm);
-        });
-      } else {
-        std::for_each(samplepoint_storage_b.begin(), samplepoint_storage_b.end(), [](Samplepoint s){
-          s.calculateSamplepointValue(dMapNorm);
-        });
+      // if(binning == 0) {
+      //   std::for_each(samplepoint_storage_u.begin(), samplepoint_storage_u.end(), [](Samplepoint s){
+      //     s.calculateSamplepointValue(dMapNorm);
+      //   });
+      // } else {
+      //   std::for_each(samplepoint_storage_b.begin(), samplepoint_storage_b.end(), [](Samplepoint s){
+      //     s.calculateSamplepointValue(dMapNorm);
+      //   });
+      // }
+
+      if (view % 3 == 0)
+      {
+         View::drawSubimageGrid(dMapNorm, binning);
+         View::drawObstacleGrid(dMapNorm, binning);
+      } else if (view % 3 == 1) {
+        if(binning == 0) {
+          std::for_each(samplepoint_storage_u.begin(), samplepoint_storage_u.end(), [](Samplepoint s){
+            s.drawSamplepoints(dMapNorm);
+          });
+        } else {
+          std::for_each(samplepoint_storage_b.begin(), samplepoint_storage_b.end(), [](Samplepoint s){
+            s.drawSamplepoints(dMapNorm);
+          });
+        }
       }
 
-      if(view) {
-        View::drawSubimageGrid(dMapNorm, binning);
-        View::drawObstacleGrid(dMapNorm, binning);
-      }
       cv::imshow("SGBM",dMapNorm);
       newDisparityMap = false;
     }
@@ -475,12 +474,8 @@ int main(int argc, char* argv[])
             break;
           }
         case 'v':
-          {
-            if(view)
-              view = false;
-            else
-              view = true;          
-          }
+            ++view;
+            break;
         default:
           std::cout << "Key pressed has no action" << std::endl;
           break;
