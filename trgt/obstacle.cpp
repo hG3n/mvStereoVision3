@@ -194,13 +194,22 @@ void createSamplepointArray(std::vector<Samplepoint>& toFill, cv::Mat const& ref
   int distanceX = reference.cols/8;
   int distanceY = reference.rows/8;
 
-  for (int c = 1; c < reference.cols/8-1; ++c)
+  std::cout << reference.cols/distanceX << std::endl;
+  std::cout << reference.cols/distanceY << std::endl;
+
+  for (int c = 1; c < distanceX-1; ++c)
   {
-    for (int r = 1; r < reference.rows/8-1; ++r)
-    {
-      toFill.push_back(Samplepoint(cv::Point(c*distanceX, r*distanceY), 2));
+    for (int r = 1; r < distanceY-1; ++r)
+    { 
+      std::cout << "c: " << c << " r: " << r << std::endl;
+      toFill.push_back(Samplepoint(cv::Point(c*(reference.cols/distanceX), r*(reference.rows/distanceY)), 2));
     }
   }
+
+  std::cout << reference.size() << std::endl;
+
+  int foo;
+  std::cin >> foo;
 
 }
 
@@ -290,9 +299,8 @@ int main(int argc, char* argv[])
   std::vector<float> distanceMap;
 
   // test samplepoint distribution
-  cv::Mat foo = dMapWork(dMapROI_u);
   std::vector<Samplepoint> samplepoint_storage;
-  createSamplepointArray(samplepoint_storage, dMapWork);
+  createSamplepointArray(samplepoint_storage, dMapWork(dMapROI_u));
 
   running = true;
   int frame = 0;
@@ -331,7 +339,8 @@ int main(int argc, char* argv[])
 
       std::cout << samplepoint_storage.size() << std::endl;
       std::for_each(samplepoint_storage.begin(), samplepoint_storage.end(), [](Samplepoint s){
-        std::cout << s.center << std::endl;
+        // std::cout << s.center << std::endl;
+        s.calculateSamplepointValue(dMapWork);
       });
 
       // display samplepoint for debug purpose
