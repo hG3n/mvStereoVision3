@@ -25,7 +25,6 @@ void Samplepoint::calculateSamplepointValue(cv::Mat & dMap)
     cv::rectangle(dMap, p1, p2, cv::Scalar(255,0,0));
 
     cv::Mat temp = dMap(roi);
-    // std::cout << temp << std::endl;
     value = Utility::calcMeanDisparity(temp);
   } 
   else
