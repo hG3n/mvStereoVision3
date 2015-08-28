@@ -197,20 +197,14 @@ void createSamplepointArray(std::vector<Samplepoint>& toFill, cv::Mat const& ref
   std::cout << reference.cols/distanceX << std::endl;
   std::cout << reference.cols/distanceY << std::endl;
 
-  for (int c = 1; c < distanceX-1; ++c)
+  for (int c = 1; c < distanceX; ++c)
   {
-    for (int r = 1; r < distanceY-1; ++r)
+    for (int r = 1; r < distanceY; ++r)
     { 
       std::cout << "c: " << c << " r: " << r << std::endl;
       toFill.push_back(Samplepoint(cv::Point(c*(reference.cols/distanceX), r*(reference.rows/distanceY)), 2));
     }
   }
-
-  std::cout << reference.size() << std::endl;
-
-  int foo;
-  std::cin >> foo;
-
 }
 
 int main(int argc, char* argv[])
@@ -299,8 +293,9 @@ int main(int argc, char* argv[])
   std::vector<float> distanceMap;
 
   // test samplepoint distribution
-  std::vector<Samplepoint> samplepoint_storage;
-  createSamplepointArray(samplepoint_storage, dMapWork(dMapROI_u));
+  std::vector<Samplepoint> samplepoint_storage_u, samplepoint_storage_b;
+  createSamplepointArray(samplepoint_storage_u, dMapWork(dMapROI_u));
+  createSamplepointArray(samplepoint_storage_b, dMapWork(dMapROI_b));
 
   running = true;
   int frame = 0;
@@ -337,11 +332,16 @@ int main(int argc, char* argv[])
         dMapWork = dMapRaw(dMapROI_b);
       }
 
-      std::cout << samplepoint_storage.size() << std::endl;
-      std::for_each(samplepoint_storage.begin(), samplepoint_storage.end(), [](Samplepoint s){
-        // std::cout << s.center << std::endl;
-        s.calculateSamplepointValue(dMapWork);
-      });
+      // calculate samplepoint value and draw samplepoints
+      if(binning == 0) {
+        std::for_each(samplepoint_storage_u.begin(), samplepoint_storage_u.end(), [](Samplepoint s){
+          s.calculateSamplepointValue(dMapWork);
+        });
+      } else {
+        std::for_each(samplepoint_storage_b.begin(), samplepoint_storage_b.end(), [](Samplepoint s){
+          s.calculateSamplepointValue(dMapWork);
+        });
+      }
 
       // display samplepoint for debug purpose
       // std::for_each(samplepoint_storage.begin(), samplepoint_storage.end(), [](Samplepoint s){
@@ -361,6 +361,17 @@ int main(int argc, char* argv[])
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
       cv::cvtColor(dMapNorm,dMapNorm,CV_GRAY2BGR);
+
+      if(binning == 0) {
+        std::for_each(samplepoint_storage_u.begin(), samplepoint_storage_u.end(), [](Samplepoint s){
+          s.calculateSamplepointValue(dMapNorm);
+        });
+      } else {
+        std::for_each(samplepoint_storage_b.begin(), samplepoint_storage_b.end(), [](Samplepoint s){
+          s.calculateSamplepointValue(dMapNorm);
+        });
+      }
+
       if(view) {
         View::drawSubimageGrid(dMapNorm, binning);
         View::drawObstacleGrid(dMapNorm, binning);
