@@ -1,11 +1,13 @@
 #ifndef __SamplepointDetection_h__
 #define __SamplepointDetection_h__
 
-#include "ObstacleDetection.h"
-
 #include <vector>
 #include <string>
+
+#include "ObstacleDetection.h"
 #include "Samplepoint.h"
+
+//OPENCV Stuff
 #include "opencv2/core.hpp"
 
 class SamplepointDetection: public ObstacleDetection
@@ -17,15 +19,15 @@ class SamplepointDetection: public ObstacleDetection
 
     void init(cv::Mat const&);
 
+    std::vector<Samplepoint> getSamplepointVec() const;
+
+    /* virtual */ void print_on(std::ostream&) const;
     /* virtual */ void build(cv::Mat const&, int, int);
     /* virtual */ void detectObstacles();
-    /* virtual */ void print_on(std::ostream&) const;
 
   private:
     std::string              mTag;
-    std::vector<Samplepoint> mSPVector;
-    cv::Mat                  mSPMatrix;
-
+    std::vector<Samplepoint> mSPVec;
 };
 
 #endif
