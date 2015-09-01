@@ -1,16 +1,13 @@
-#ifndef __OBSTACLE_DETECION__H__
-#define __OBSTACLE_DETECION__H__
-
-#include <ObstacleDetection.h>
+#ifndef __MeanDisparityDetection_h__
+#define __MeanDisparityDetection_h__
 
 #include <vector>
 #include <iostream>
 
+#include "ObstacleDetection.h"
+
 //OPENCV Stuff
 #include "opencv2/opencv.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/features2d/features2d.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
 
 class MeanDisparityDetection: public ObstacleDetection
 {
