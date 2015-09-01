@@ -241,7 +241,7 @@ bool Camera::getImage(std::vector<char> &imageToReturn)
 
         // std::memcpy(mat.ptr(),static_cast<char*>(mRequest->imageData.read()), mRequest->imageSize.read());
         // mat = cv::Mat(mHeight, mWidth, CV_8UC1, static_cast<char*>(mRequest->imageData.read()));
-        imageToReturn= std::vector<char>(static_cast<char*>(mRequest->imageData.read()),
+        imageToReturn = std::vector<char>(static_cast<char*>(mRequest->imageData.read()),
                                          static_cast<char*>(mRequest->imageData.read()) +\
                                          mRequest->imageSize.read());
 
