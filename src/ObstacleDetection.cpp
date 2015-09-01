@@ -9,13 +9,6 @@ mRange()
   LOG(INFO) << mTag << "created" << std::endl;
 }
 
-ObstacleDetection::ObstacleDetection(std::pair<float,float> const range):
-  mTag("OBSTACLE DETECTION\t"),
-  mRange(range)
-{
-  LOG(INFO) << mTag << "created" << std::endl;
-}
-
 ObstacleDetection::~ObstacleDetection()
 {
   LOG(INFO) << mTag << "destroyed!" << std::endl;

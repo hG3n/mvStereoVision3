@@ -1,14 +1,11 @@
-#ifndef __OBSTACLE_DETECION__H
-#define __OBSTACLE_DETECION__H
+#ifndef __OBSTACLE_DETECION__H__
+#define __OBSTACLE_DETECION__H__
 
 #include <vector>
 #include <iostream>
 
 //OPENCV Stuff
 #include "opencv2/opencv.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/features2d/features2d.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
 
 class ObstacleDetection
 {
@@ -18,7 +15,6 @@ class ObstacleDetection
   enum MODE {MEAN_DISTANCE, SAMPLEPOINTS};
 
   ObstacleDetection();
-  ObstacleDetection(std::pair<float,float> const);
   virtual ~ObstacleDetection();
 
   // pure virtual functions implemented obstacle detection methods
