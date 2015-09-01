@@ -14,10 +14,25 @@
 
 namespace Disparity
 {
+  struct sgbmParameters {
+    int minDisp;
+    int numDisp;
+    int blockSize;
+    int disp12MaxDiff;
+    int preFilterCap;
+    int uniquenessRatio;
+    int speckleWindowSize;
+    int speckleRange;
+    int disparityMode;
+  };
+
 	void sgbm(Stereopair const&, cv::Mat&, cv::Ptr<cv::StereoSGBM>);
   // void binary_sgbm(Stereopair const& , cv::Mat&, cv::Ptr<cv::stereo::StereoBinarySGBM>);
   void bm(Stereopair const&, cv::Mat& , cv::Ptr<cv::StereoBM>);
   void tm(Stereopair const&, cv::Mat& ,unsigned int);
+
+  // parameter loader
+  bool loadSGBMParameters(std::string const, cv::Ptr<cv::StereoSGBM>&, sgbmParameters&);
 }
 
 #endif //__DISPARITY__H__
