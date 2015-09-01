@@ -218,10 +218,10 @@ bool Stereosystem::initRectification()
 
     // just get the image conained by both ROIs
     mDisplayROI = mValidROI[0] & mValidROI[1];
-    std::cout<<"SYSTEM: "<<mQ<<std::endl;
-    std::cout << "ROI 1: " << mValidROI[0] << std::endl;
-    std::cout << "ROI 2: " << mValidROI[1] << std::endl;
-    std::cout << mDisplayROI << std::endl;
+    // std::cout<<"SYSTEM: "<<mQ<<std::endl;
+    // std::cout << "ROI 1: " << mValidROI[0] << std::endl;
+    // std::cout << "ROI 2: " << mValidROI[1] << std::endl;
+    // std::cout << mDisplayROI << std::endl;
 
     LOG(INFO) << mTag << "Rectification successfully initialized! "<< mDisplayROI <<std::endl;
     mIsInit = true;
