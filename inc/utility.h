@@ -71,6 +71,8 @@ namespace Utility
   float									 calcStdDev(cv::Mat const&);
 
   void subdivideImage(cv::Mat const&, int, std::vector<cv::Mat>&);
+
+  std::string type2str(int);
 }
 
 #endif //__UTILITY__H__
