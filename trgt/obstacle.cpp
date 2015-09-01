@@ -8,8 +8,12 @@
 #include "Stereosystem.h"
 #include "disparity.h"
 #include "easylogging++.h"
-// #include "obstacleDetection.h"
 #include "view.h"
+
+#include "ObstacleDetection.h"
+#include "MeanDisparityDetection.h"
+#include "SamplepointDetection.h"
+
 #include "Samplepoint.h"
 
 #include <thread>
@@ -33,8 +37,6 @@ bool newDisparityMap = false;
 bool reload = false;
 int view;
 
-// cv::Size imageSize(752, 480);
-
 cv::Mat dMapRaw;
 cv::Mat dMapNorm;
 cv::Mat dMapWork(480, 752, CV_32F);
@@ -47,8 +49,7 @@ int exposure = 10000;
 float gain = 4.0;
 bool hdr = false;
 
-void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
-{
+void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity) {
   while(running)
   {
     std::unique_lock<std::mutex> ul(disparityLock);
@@ -59,8 +60,7 @@ void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
   }
 }
 
-void mouseClick(int event, int x, int y,int flags, void* userdata)
-{
+void mouseClick(int event, int x, int y,int flags, void* userdata) {
   if  ( event == CV_EVENT_LBUTTONDOWN )
   {
     double d = static_cast<float>(dMapRaw.at<short>(y,x));
@@ -70,8 +70,7 @@ void mouseClick(int event, int x, int y,int flags, void* userdata)
   }
 }
 
-void subdivideImages(cv::Mat const& dMap, std::vector<std::vector<cv::Mat>> &subimages, int binning)
-{
+void subdivideImages(cv::Mat const& dMap, std::vector<std::vector<cv::Mat>> &subimages, int binning) {
   // build a vector containing 81 elements
   // the elements are ordererd along to a more coarser 3x3 grid
   // after subdividing has been completed the images are ordered
@@ -87,11 +86,9 @@ void subdivideImages(cv::Mat const& dMap, std::vector<std::vector<cv::Mat>> &sub
   }
 }
 
-void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b, int binning, bool reload = false)
-{
+void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b, int binning, bool reload = false) {
   /* TODO:
-      FIX THE STILL THERE RELOAD BUG
-      PUT EVERYTHING TO DISPARITY NAMESPACE
+    PUT EVERYTHING TO DISPARITY NAMESPACE
   */
 
   // the best value to work with in order to include everything and dont exclude important work
@@ -103,23 +100,25 @@ void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b,
     }
   }
 
+  std::cout << reference.size() << std::endl;
+
   if(!reload) {
     roi_u = cv::Rect(cv::Point((pixelShift),0),cv::Point(reference.cols,reference.rows));
     roi_b = cv::Rect(cv::Point((pixelShift)/2,0),cv::Point(reference.cols/2,reference.rows/2));
   } else {
-    if(binning == 1) {
-      roi_u = cv::Rect(cv::Point((sgbmParameters.numDisp/3+sgbmParameters.blockSize)/2,0),cv::Point(reference.cols/2,reference.rows/2));
-      roi_b = cv::Rect(cv::Point((sgbmParameters.numDisp/3+sgbmParameters.blockSize),0),cv::Point(reference.cols,reference.rows));
+    if(binning == 0){
+      roi_u = cv::Rect(cv::Point(pixelShift,0), cv::Point(reference.cols,reference.rows));
     } else {
-      roi_u = cv::Rect(cv::Point((sgbmParameters.numDisp/3+sgbmParameters.blockSize),0),cv::Point(reference.cols,reference.rows));
-      roi_b = cv::Rect(cv::Point((sgbmParameters.numDisp/3+sgbmParameters.blockSize)*2,0),cv::Point(reference.cols*2,reference.rows*2));
+      roi_b = cv::Rect(cv::Point(pixelShift,0), cv::Point(reference.cols,reference.rows));
     }
   }
 
+  std::cout << "roi b" << roi_b << std::endl;
+  std::cout << "roi u" << roi_u << std::endl;
+
 }
 
-void createSamplepointArray(std::vector<Samplepoint>& toFill, cv::Mat const& reference)
-{
+void createSamplepointArray(std::vector<Samplepoint>& toFill, cv::Mat const& reference) {
   int distanceX = reference.cols/8;
   int distanceY = reference.rows/8;
 
@@ -144,6 +143,8 @@ int main(int argc, char* argv[])
   mvIMPACT::acquire::DeviceManager devMgr;
 
   // create both cameras
+  // auto left = std::make_shared<Camera>;
+  // auto right = std::make_shared<Camera>;
   Camera *left;
   Camera *right;
 
@@ -224,10 +225,12 @@ int main(int argc, char* argv[])
   // obstacleDetection obst;
   // std::vector<float> distanceMap;
 
-  // test samplepoint distribution
-  std::vector<Samplepoint> samplepoint_storage_u, samplepoint_storage_b;
-  createSamplepointArray(samplepoint_storage_u, dMapWork(dMapROI_u));
-  createSamplepointArray(samplepoint_storage_b, dMapWork(dMapROI_b));
+  ObstacleDetection *o;
+  // MeanDisparityDetection m(Q_32F);
+  SamplepointDetection sd;
+  // o = &m;
+  sd.init(dMapWork);
+  o = &sd;
 
   running = true;
   int frame = 0;
@@ -243,12 +246,11 @@ int main(int argc, char* argv[])
 
     if(newDisparityMap)
     {
-      // printf("binning: %i cols: %i rows: %i \n",binning, dMapRaw.cols, dMapRaw.rows );
-
       // cut the disparity map in order to ignore the camera shift
       // camera shift is roughly calculated by a third of numDisparity
       // added up with the used blocksize
       if(reload) {
+        std::cout << dMapRaw.size() << std::endl;
         createDMapROIS(dMapRaw, dMapROI_u, dMapROI_b, binning, reload);
         reload = false;
       }
@@ -256,10 +258,17 @@ int main(int argc, char* argv[])
       if(binning == 0) {
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_u);
+        sd.init(dMapWork);
+        o = &sd;
       } else if (binning == 1) {
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_b);
+        sd.init(dMapWork);
+        o = &sd;
       }
+
+      o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_DISTANCE);
+      // std::cout << *o << std::endl;
 
       // clear current subimages and refill the container with new ones
       // subimages.clear();
@@ -281,20 +290,9 @@ int main(int argc, char* argv[])
       //   });
       // }
 
-      if (view % 3 == 0)
-      {
+      if (view % 2 == 0) {
          View::drawSubimageGrid(dMapNorm, binning);
          View::drawObstacleGrid(dMapNorm, binning);
-      } else if (view % 3 == 1) {
-        if(binning == 0) {
-          std::for_each(samplepoint_storage_u.begin(), samplepoint_storage_u.end(), [](Samplepoint s){
-            s.drawSamplepoints(dMapNorm);
-          });
-        } else {
-          std::for_each(samplepoint_storage_b.begin(), samplepoint_storage_b.end(), [](Samplepoint s){
-            s.drawSamplepoints(dMapNorm);
-          });
-        }
       }
 
       cv::imshow("SGBM",dMapNorm);
@@ -306,8 +304,7 @@ int main(int argc, char* argv[])
     // keypress stuff
     if(key > 0)
     {
-      switch(key)
-      {
+      switch(key) {
         case 'q':
           LOG(INFO) << tag << "Exit requested" <<std::endl;
           delete left;
@@ -336,6 +333,7 @@ int main(int argc, char* argv[])
           reload = true;
           break;
         case '0':
+          o->detectObstacles();
           break;
         case 'E':
           exposure += 1000;
@@ -383,15 +381,6 @@ int main(int argc, char* argv[])
           g << "K_R" << stereo.getNewKMats()[1];
           break;
         }
-        case 'd':
-          {
-            int c = dMapWork.cols/2;
-            int r = dMapWork.rows/2;
-            Samplepoint s(cv::Point(c,r), 1);
-            s.calculateSamplepointValue(dMapWork);
-            std::cout << dMapWork.at<short>(r,c) << std::endl;
-            break;
-          }
         case 'v':
             ++view;
             break;
