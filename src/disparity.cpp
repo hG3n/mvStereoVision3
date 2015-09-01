@@ -56,3 +56,53 @@ void Disparity::tm(Stereopair const& inputImages, cv::Mat &output, unsigned int 
     }
   }
 }
+
+bool Disparity::loadSGBMParameters(std::string const filename, cv::Ptr<cv::StereoSGBM> & disparityObj, sgbmParameters & para)
+{
+  cv::FileStorage fs;
+  bool success = fs.open(filename, cv::FileStorage::READ);
+
+  if(success)
+  {
+    if(fs["numDisp"].empty() || fs["blockSize"].empty() || fs["speckleWindowSize"].empty() || fs["speckleWindowRange"].empty())    {
+      LOG(ERROR) << "Node in " << filename << " is empty" << std::endl;
+      fs.release();
+      return false;
+    }
+
+    fs["minDisp"]             >> para.minDisp;
+    fs["numDisp"]             >> para.numDisp;
+    fs["blockSize"]           >> para.blockSize;
+    fs["disp12MaxDiff"]       >> para.disp12MaxDiff;
+    fs["preFilterCap"]        >> para.preFilterCap;
+    fs["uniquenessRatio"]     >> para.uniquenessRatio;
+    fs["speckleWindowSize"]   >> para.speckleWindowSize;
+    fs["speckleWindowRange"]  >> para.speckleRange;
+    fs["mode"]                >> para.disparityMode;
+
+    disparityObj->setMinDisparity(para.minDisp);
+    disparityObj->setNumDisparities(para.numDisp);
+    disparityObj->setBlockSize(para.blockSize);
+    disparityObj->setPreFilterCap(para.preFilterCap);
+    disparityObj->setUniquenessRatio(para.uniquenessRatio);
+    disparityObj->setDisp12MaxDiff(para.disp12MaxDiff);
+    disparityObj->setSpeckleWindowSize(para.speckleWindowSize);
+    disparityObj->setSpeckleRange(para.speckleRange);
+
+    if(para.disparityMode == 1 )
+      disparityObj->setMode(cv::StereoSGBM::MODE_HH);
+    else
+      disparityObj->setMode(cv::StereoSGBM::MODE_SGBM);
+  
+    LOG(INFO) << "Successfully loaded disparity parameters" << std::endl;
+
+    fs.release();
+    return true;
+  }
+  else
+  {
+    LOG(ERROR) << "Unable to open disparity parameters" << std::endl;
+    fs.release();
+    return false;
+  }
+}
