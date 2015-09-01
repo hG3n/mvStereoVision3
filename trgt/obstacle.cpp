@@ -279,17 +279,6 @@ int main(int argc, char* argv[])
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
       cv::cvtColor(dMapNorm,dMapNorm,CV_GRAY2BGR);
 
-      // currently fixed sizes and no recalc after reload
-      // if(binning == 0) {
-      //   std::for_each(samplepoint_storage_u.begin(), samplepoint_storage_u.end(), [](Samplepoint s){
-      //     s.calculateSamplepointValue(dMapNorm);
-      //   });
-      // } else {
-      //   std::for_each(samplepoint_storage_b.begin(), samplepoint_storage_b.end(), [](Samplepoint s){
-      //     s.calculateSamplepointValue(dMapNorm);
-      //   });
-      // }
-
       if (view % 2 == 0) {
          View::drawSubimageGrid(dMapNorm, binning);
          View::drawObstacleGrid(dMapNorm, binning);
