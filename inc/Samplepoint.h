@@ -10,7 +10,7 @@ struct Samplepoint
   ~Samplepoint();
 
   void calculateSamplepointValue(cv::Mat const&);
-  void drawSamplepoints(cv::Mat&);
+  void draw(cv::Mat &);
 
   // member
   cv::Point   center;
