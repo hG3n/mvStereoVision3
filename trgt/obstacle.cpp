@@ -8,7 +8,7 @@
 #include "Stereosystem.h"
 #include "disparity.h"
 #include "easylogging++.h"
-#include "obstacleDetection.h"
+// #include "obstacleDetection.h"
 #include "view.h"
 #include "Samplepoint.h"
 
@@ -25,9 +25,9 @@ std::mutex disparityLock;
 std::condition_variable cond_var;
 
 cv::Ptr<cv::StereoSGBM> disparitySGBM;
-cv::Ptr<cv::StereoBM> disparityBM;
 
-int minDisp, numDisp, blockSize, speckleWindowSize, speckleRange, disp12MaxDiff, preFilterCap, uniquenessRatio;
+// create empty dto for storing sgbm parameters
+Disparity::sgbmParameters sgbmParameters;
 int disparityMode;
 bool newDisparityMap = false;
 bool reload = false;
@@ -70,56 +70,6 @@ void mouseClick(int event, int x, int y,int flags, void* userdata)
   }
 }
 
-bool loadDisparityParameters(std::string const filename)
-{
-  cv::FileStorage fs;
-  bool success = fs.open(filename, cv::FileStorage::READ);
-
-  if(success)
-  {
-    if(fs["numDisp"].empty() || fs["blockSize"].empty() || fs["speckleWindowSize"].empty() || fs["speckleWindowRange"].empty())    {
-      LOG(ERROR) << "Node in " << filename << " is empty" << std::endl;
-      fs.release();
-      return false;
-    }
-
-    fs["minDisp"]             >> minDisp;
-    fs["numDisp"]             >> numDisp;
-    fs["blockSize"]           >> blockSize;
-    fs["disp12MaxDiff"]       >> disp12MaxDiff;
-    fs["preFilterCap"]        >> preFilterCap;
-    fs["uniquenessRatio"]     >> uniquenessRatio;
-    fs["speckleWindowSize"]   >> speckleWindowSize;
-    fs["speckleWindowRange"]  >> speckleRange;
-    fs["mode"]                >> disparityMode;
-
-    disparitySGBM->setMinDisparity(minDisp);
-    disparitySGBM->setNumDisparities(numDisp);
-    disparitySGBM->setBlockSize(blockSize);
-    disparitySGBM->setPreFilterCap(preFilterCap);
-    disparitySGBM->setUniquenessRatio(uniquenessRatio);
-    disparitySGBM->setDisp12MaxDiff(disp12MaxDiff);
-    disparitySGBM->setSpeckleWindowSize(speckleWindowSize);
-    disparitySGBM->setSpeckleRange(speckleRange);
-
-    if(disparityMode == 1 )
-      disparitySGBM->setMode(cv::StereoSGBM::MODE_HH);
-    else
-      disparitySGBM->setMode(cv::StereoSGBM::MODE_SGBM);
-  
-    LOG(INFO) << "Successfully loaded disparity parameters" << std::endl;
-
-    fs.release();
-    return true;
-  }
-  else
-  {
-    LOG(ERROR) << "Unable to open disparity parameters" << std::endl;
-    fs.release();
-    return false;
-  }
-}
-
 void subdivideImages(cv::Mat const& dMap, std::vector<std::vector<cv::Mat>> &subimages, int binning)
 {
   // build a vector containing 81 elements
@@ -137,37 +87,15 @@ void subdivideImages(cv::Mat const& dMap, std::vector<std::vector<cv::Mat>> &sub
   }
 }
 
-std::string type2str(int type) {
-  std::string r;
-
-  uchar depth = type & CV_MAT_DEPTH_MASK;
-  uchar chans = 1 + (type >> CV_CN_SHIFT);
-
-  switch ( depth ) {
-    case CV_8U:  r = "8U"; break;
-    case CV_8S:  r = "8S"; break;
-    case CV_16U: r = "16U"; break;
-    case CV_16S: r = "16S"; break;
-    case CV_32S: r = "32S"; break;
-    case CV_32F: r = "32F"; break;
-    case CV_64F: r = "64F"; break;
-    default:     r = "User"; break;
-  }
-
-  r += "C";
-  r += (chans+'0');
-
-  return r;
-}
-
 void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b, int binning, bool reload = false)
 {
   /* TODO:
       FIX THE STILL THERE RELOAD BUG
+      PUT EVERYTHING TO DISPARITY NAMESPACE
   */
 
   // the best value to work with in order to include everything and dont exclude important work
-  int pixelShift = numDisp / 2;
+  int pixelShift = sgbmParameters.numDisp / 2;
   if(pixelShift % 2 == 1) {
     pixelShift = pixelShift + 1;
     if((reference.cols - pixelShift) % 8 != 0) {
@@ -180,13 +108,14 @@ void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b,
     roi_b = cv::Rect(cv::Point((pixelShift)/2,0),cv::Point(reference.cols/2,reference.rows/2));
   } else {
     if(binning == 1) {
-      roi_u = cv::Rect(cv::Point((numDisp/3+blockSize)/2,0),cv::Point(reference.cols/2,reference.rows/2));
-      roi_b = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
+      roi_u = cv::Rect(cv::Point((sgbmParameters.numDisp/3+sgbmParameters.blockSize)/2,0),cv::Point(reference.cols/2,reference.rows/2));
+      roi_b = cv::Rect(cv::Point((sgbmParameters.numDisp/3+sgbmParameters.blockSize),0),cv::Point(reference.cols,reference.rows));
     } else {
-      roi_u = cv::Rect(cv::Point((numDisp/3+blockSize),0),cv::Point(reference.cols,reference.rows));
-      roi_b = cv::Rect(cv::Point((numDisp/3+blockSize)*2,0),cv::Point(reference.cols*2,reference.rows*2));
+      roi_u = cv::Rect(cv::Point((sgbmParameters.numDisp/3+sgbmParameters.blockSize),0),cv::Point(reference.cols,reference.rows));
+      roi_b = cv::Rect(cv::Point((sgbmParameters.numDisp/3+sgbmParameters.blockSize)*2,0),cv::Point(reference.cols*2,reference.rows*2));
     }
-  } 
+  }
+
 }
 
 void createSamplepointArray(std::vector<Samplepoint>& toFill, cv::Mat const& reference)
@@ -269,15 +198,18 @@ int main(int argc, char* argv[])
   cv::setMouseCallback("SGBM", mouseClick, NULL);
 
   // create disparity object and connected thread
-  disparitySGBM = cv::StereoSGBM::create(minDisp,
-                                         numDisp,
-                                         blockSize,
-                                         8*blockSize*blockSize,
-                                         32*blockSize*blockSize);
+  disparitySGBM = cv::StereoSGBM::create(sgbmParameters.minDisp,
+                                         sgbmParameters.numDisp,
+                                         sgbmParameters.blockSize,
+                                         8*sgbmParameters.blockSize*sgbmParameters.blockSize,
+                                         32*sgbmParameters.blockSize*sgbmParameters.blockSize);
   std::thread disparity(disparityCalcSGBM,std::ref(s),std::ref(disparitySGBM));
 
   // load disparity parameters to get intial values
-  if(!loadDisparityParameters("./configs/sgbm.yml"))
+  // if(!loadDisparityParameters("./configs/sgbm.yml"))
+  //   return 0;
+
+  if(!Disparity::loadSGBMParameters("./configs/sgbm.yml", disparitySGBM, sgbmParameters))
     return 0;
 
   // pre create the rois for binned and unbinned mode
@@ -289,8 +221,8 @@ int main(int argc, char* argv[])
   subimages.reserve(9);
 
   // init obstacle detection
-  obstacleDetection obst;
-  std::vector<float> distanceMap;
+  // obstacleDetection obst;
+  // std::vector<float> distanceMap;
 
   // test samplepoint distribution
   std::vector<Samplepoint> samplepoint_storage_u, samplepoint_storage_b;
@@ -318,9 +250,6 @@ int main(int argc, char* argv[])
       // added up with the used blocksize
       if(reload) {
         createDMapROIS(dMapRaw, dMapROI_u, dMapROI_b, binning, reload);
-        // std::cout << "recreated rois" << std::endl;
-        // std::cout << "binned roi:   " << dMapROI_b << std::endl;
-        // std::cout << "unbinned roi: " << dMapROI_u << std::endl;
         reload = false;
       }
 
@@ -332,14 +261,6 @@ int main(int argc, char* argv[])
         dMapWork = dMapRaw(dMapROI_b);
       }
 
-      // calculate samplepoint value and draw samplepoints
-      
-
-      // display samplepoint for debug purpose
-      // std::for_each(samplepoint_storage.begin(), samplepoint_storage.end(), [](Samplepoint s){
-      //   std::cout << s.center << std::endl;
-      // });
-
       // clear current subimages and refill the container with new ones
       // subimages.clear();
       // subdivideImages(dMapWork, subimages, binning);
@@ -349,6 +270,7 @@ int main(int argc, char* argv[])
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
       cv::cvtColor(dMapNorm,dMapNorm,CV_GRAY2BGR);
 
+      // currently fixed sizes and no recalc after reload
       // if(binning == 0) {
       //   std::for_each(samplepoint_storage_u.begin(), samplepoint_storage_u.end(), [](Samplepoint s){
       //     s.calculateSamplepointValue(dMapNorm);
@@ -410,13 +332,10 @@ int main(int argc, char* argv[])
           std::cout<< left->getFramerate() << " " << right-> getFramerate() <<std::endl;
           break;
         case 'r':
-          loadDisparityParameters("./configs/sgbm.yml");
+          Disparity::loadSGBMParameters("./configs/sgbm.yml", disparitySGBM, sgbmParameters);
           reload = true;
           break;
         case '0':
-          obst.detectObstacles(0, std::make_pair(0.8, 1.2));
-          reload = true;
-          std::cout << "" << std::endl;
           break;
         case 'E':
           exposure += 1000;
