@@ -29,7 +29,7 @@ void Samplepoint::calculateSamplepointValue(cv::Mat const& dMap)
   }
 }
 
-void Samplepoint::drawSamplepoints(cv::Mat& dMap)
+void Samplepoint::draw(cv::Mat& dMap)
 {
   cv::Point p1(center.x - radius, center.y - radius);
   cv::Point p2(center.x + radius + 1, center.y + radius + 1);
