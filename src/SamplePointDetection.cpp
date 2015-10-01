@@ -49,7 +49,10 @@ void SamplepointDetection::build(cv::Mat const& dMap, int binning, int mode)
 // -----------------------------------------------------------------------------
 void SamplepointDetection::detectObstacles() 
 {
-  std::cout << "detection called" << std::endl;
+  for( auto i = mSPVec.begin(); i < mSPVec.end(); ++i)
+  {
+    std::cout << (*i).value << std::endl;
+  }
 }
 
 // -----------------------------------------------------------------------------
