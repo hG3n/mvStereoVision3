@@ -36,6 +36,5 @@ cv::Mat disparityMap_32FC1;
 
 int main(int argc, char const *argv[])
 {
-
   return 0;
 }
