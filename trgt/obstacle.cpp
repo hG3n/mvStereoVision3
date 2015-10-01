@@ -49,6 +49,8 @@ int exposure = 10000;
 float gain = 4.0;
 bool hdr = false;
 
+bool detectionIsInit = false;
+
 void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity) {
   while(running)
   {
@@ -226,7 +228,7 @@ int main(int argc, char* argv[])
   // std::vector<float> distanceMap;
 
   ObstacleDetection *o;
-  // MeanDisparityDetection m(Q_32F);
+  MeanDisparityDetection m(Q_32F);
   SamplepointDetection sd;
   // o = &m;
   sd.init(dMapWork);
@@ -259,29 +261,26 @@ int main(int argc, char* argv[])
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_u);
         sd.init(dMapWork);
-        o = &sd;
+        if(!detectionIsInit)
+          o = &sd;
       } else if (binning == 1) {
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_b);
         sd.init(dMapWork);
-        o = &sd;
+        if(!detectionIsInit)
+          o = &sd;
       }
 
       o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_DISTANCE);
-      // std::cout << *o << std::endl;
-
-      // clear current subimages and refill the container with new ones
-      // subimages.clear();
-      // subdivideImages(dMapWork, subimages, binning);
-      // obst.buildMeanDistanceMap(Q_32F, subimages, binning);
+      // o->detectObstacles();
 
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
       cv::cvtColor(dMapNorm,dMapNorm,CV_GRAY2BGR);
 
       if (view % 2 == 0) {
-         View::drawSubimageGrid(dMapNorm, binning);
-         View::drawObstacleGrid(dMapNorm, binning);
+        View::drawSubimageGrid(dMapNorm, binning);
+        View::drawObstacleGrid(dMapNorm, binning);
       }
 
       cv::imshow("SGBM",dMapNorm);
@@ -312,6 +311,11 @@ int main(int argc, char* argv[])
           left->setBinning(binning);
           right->setBinning(binning);
           stereo.resetRectification();
+          detectionIsInit = false;
+          // reload parameters in order to recompute pixelshift
+          Disparity::loadSGBMParameters("./configs/sgbm.yml", disparitySGBM, sgbmParameters);
+          detectionIsInit = false;
+          reload = true;
           break;
         }
         case 'f':
@@ -319,6 +323,7 @@ int main(int argc, char* argv[])
           break;
         case 'r':
           Disparity::loadSGBMParameters("./configs/sgbm.yml", disparitySGBM, sgbmParameters);
+          detectionIsInit = false;
           reload = true;
           break;
         case '0':
@@ -356,12 +361,6 @@ int main(int argc, char* argv[])
             hdr = false;
             break;
           }
-        case 's':
-          std::cout << dMapWork.size() << std::endl;
-          // std::cout << (dMapWork.cols + (8-(dMapWork.cols % 8))) % 8 << std::endl;
-          std::cout << dMapWork.cols%8 << std::endl;
-          std::cout << dMapWork.rows%8 << std::endl;
-          break;
         case 'n':
         {
           cv::FileStorage g("afterCalibrationParameters.yml", cv::FileStorage::WRITE);
@@ -373,6 +372,8 @@ int main(int argc, char* argv[])
         case 'v':
             ++view;
             break;
+        case 'd':
+          typeof(sd);
         default:
           std::cout << "Key pressed has no action" << std::endl;
           break;
