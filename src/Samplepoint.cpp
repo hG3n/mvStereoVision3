@@ -22,6 +22,7 @@ void Samplepoint::calculateSamplepointValue(cv::Mat const& dMap)
 
     cv::Mat temp = dMap(roi);
     value = Utility::calcMeanDisparity(temp);
+    // std::cout << value << std::endl;
   } 
   else
   {
