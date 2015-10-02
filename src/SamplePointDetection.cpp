@@ -1,8 +1,9 @@
 #include "SamplepointDetection.h"
 
-SamplepointDetection::SamplepointDetection():
+SamplepointDetection::SamplepointDetection(cv::Mat const& Q):
   mTag("SAMPLEPOINT DETECTION\t"),
-  mSPVec()
+  mSPVec(),
+  mQ(Q)
 {}
 
 SamplepointDetection::~SamplepointDetection()
@@ -27,10 +28,11 @@ void SamplepointDetection::init(cv::Mat const& reference) {
   }
 
   // center point of the image with z in 'inf'
+  mCenterPoint = cv::Mat_<float>(1,4);
   mCenterPoint(0) = reference.cols/2;
   mCenterPoint(1) = reference.rows/2;
   mCenterPoint(2) = 10000;
-  mCenterPoint(0) = 0;
+  mCenterPoint(3) = 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -61,7 +63,14 @@ void SamplepointDetection::build(cv::Mat const& dMap, int binning, int mode)
 // -----------------------------------------------------------------------------
 void SamplepointDetection::detectObstacles() 
 {
-
+  float value = mSPVec[500].value;
+  cv::Mat_<float> temp = Utility::calcCoordinate(mQ, value, mSPVec[500].center.x, mSPVec[500].center.y);
+#define N 32
+  std::cout << mCenterPoint << std::endl;
+  std::cout << temp.t() << std::endl;
+#undef N
+  float angle = Utility::calcAngle(mCenterPoint,temp.t());
+  std::cout << angle << std::endl;
 }
 
 // -----------------------------------------------------------------------------
