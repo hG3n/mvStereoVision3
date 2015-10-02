@@ -180,7 +180,7 @@ int main(int argc, char* argv[])
   if(!stereo.loadExtrinisic(inputParameter +"/extrinsic.yml"))
     return 0;
 
-   // create stereo image pair
+  // create stereo image pair
   // Stereopair s{cv::Mat{left->getImageHeight(), left->getImageWidth(), CV_8UC1, cv::Scalar::all(0)},
                 // cv::Mat{right->getImageHeight(), right->getImageWidth(), CV_8UC1, cv::Scalar::all(0)}};
   Stereopair s;
@@ -361,19 +361,32 @@ int main(int argc, char* argv[])
             hdr = false;
             break;
           }
+          break;
+        case 's':
+          {
+            std::vector<cv::Mat_<float>> vec;
+            for (std::vector<Samplepoint>::iterator i = sd.getSamplepointVec().begin(); i != sd.getSamplepointVec().end(); ++i)
+            {
+              cv::Mat_<float> foo;
+              Utility::calcCoordinate(foo, Q_32F, dMapWork, 100,100);
+              vec.push_back(foo);
+            }
+            cv::FileStorage n("afterCalibrationParameters.yml", cv::FileStorage::WRITE);
+
+          }
+          break;
         case 'n':
         {
           cv::FileStorage g("afterCalibrationParameters.yml", cv::FileStorage::WRITE);
           g << "Q" << Q_32F;
           g << "K_L" << stereo.getNewKMats()[0];
           g << "K_R" << stereo.getNewKMats()[1];
+          g.release();
           break;
         }
         case 'v':
             ++view;
             break;
-        case 'd':
-          typeof(sd);
         default:
           std::cout << "Key pressed has no action" << std::endl;
           break;
