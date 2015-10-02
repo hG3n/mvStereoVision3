@@ -229,7 +229,7 @@ int main(int argc, char* argv[])
 
   ObstacleDetection *o;
   MeanDisparityDetection m(Q_32F);
-  SamplepointDetection sd;
+  SamplepointDetection sd(Q_32F);
   // o = &m;
   sd.init(dMapWork);
   o = &sd;
@@ -362,18 +362,8 @@ int main(int argc, char* argv[])
             break;
           }
           break;
-        case 's':
-          {
-            std::vector<cv::Mat_<float>> vec;
-            for (std::vector<Samplepoint>::iterator i = sd.getSamplepointVec().begin(); i != sd.getSamplepointVec().end(); ++i)
-            {
-              cv::Mat_<float> foo;
-              Utility::calcCoordinate(foo, Q_32F, dMapWork, 100,100);
-              vec.push_back(foo);
-            }
-            cv::FileStorage n("afterCalibrationParameters.yml", cv::FileStorage::WRITE);
-
-          }
+        case 'd':
+          o->detectObstacles();
           break;
         case 'n':
         {
