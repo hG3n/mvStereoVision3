@@ -173,9 +173,9 @@ double Utility::checkSharpness(cv::Mat const& src)
   return cv::mean(FM).val[0];
 }
 
-bool Utility::calcCoordinate(cv::Mat_<float> &toReturn,cv::Mat const& Q, cv::Mat const& disparityMap,int x,int y)
+bool Utility::calcCoordinate(cv::Mat_<float> &toReturn,cv::Mat const& Q, cv::Mat const& dMap,int x,int y)
 {
-  double d = static_cast<float>(disparityMap.at<short>(y,x));
+  float d = dMap.at<float>(x,y);
   d/=16.0;
   if(d > 0)
   {
