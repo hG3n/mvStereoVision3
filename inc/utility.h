@@ -62,9 +62,9 @@ namespace Utility
 	// helper
 	double 	checkSharpness(cv::Mat const&);
 
-	bool 	calcCoordinate(cv::Mat_<float> &,cv::Mat const&, cv::Mat const&,int,int);
-	float calcDistance(cv::Mat const&, float const&,int);
-  void  calcDistanceMap(cv::Mat&, cv::Mat const&, cv::Mat const&, int);
+  cv::Mat calcCoordinate(cv::Mat const&, cv::Mat const&,int,int);
+  cv::Mat calcCoordinate(cv::Mat const&, float ,int,int);
+	float calcDistance(cv::Mat const&, float const&, int);
 
   float                  calcMeanDisparity(cv::Mat const&);
   std::pair<float,float> calcMinMaxDisparity(cv::Mat const&);
@@ -73,6 +73,9 @@ namespace Utility
   void subdivideImage(cv::Mat const&, int, std::vector<cv::Mat>&);
 
   std::string type2str(int);
+
+  float calcMagnitude(cv::Mat const &);
+  float calcAngle(cv::Mat const&, cv::Mat const&);
 }
 
 #endif //__UTILITY__H__
