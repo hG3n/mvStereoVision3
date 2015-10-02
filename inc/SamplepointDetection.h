@@ -20,6 +20,7 @@ class SamplepointDetection: public ObstacleDetection
     void init(cv::Mat const&);
 
     std::vector<Samplepoint> getSamplepointVec() const;
+    cv::Mat_<float>          getCenterPoint() const;
 
     /* virtual */ void print_on(std::ostream&) const;
     /* virtual */ void build(cv::Mat const&, int, int);
@@ -28,6 +29,8 @@ class SamplepointDetection: public ObstacleDetection
   private:
     std::string              mTag;
     std::vector<Samplepoint> mSPVec;
+    std::vector<float>       mDistanceVec;
+    cv::Mat_<float>          mCenterPoint;
 };
 
 #endif
