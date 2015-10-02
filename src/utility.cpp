@@ -173,24 +173,56 @@ double Utility::checkSharpness(cv::Mat const& src)
   return cv::mean(FM).val[0];
 }
 
-bool Utility::calcCoordinate(cv::Mat_<float> &toReturn,cv::Mat const& Q, cv::Mat const& dMap,int x,int y)
+cv::Mat Utility::calcCoordinate(cv::Mat const& Q, cv::Mat const& dMap,int x,int y)
 {
+  cv::Mat_<float> coordinate(1,4);
   float d = dMap.at<float>(x,y);
   d/=16.0;
-  if(d > 0)
-  {
-    toReturn(0)=x;
-    toReturn(1)=y;
-    toReturn(2)=d;
-    toReturn(3)=1;
+  
+  if(d > 0) {
+    coordinate(0)=x;
+    coordinate(1)=y;
+    coordinate(2)=d;
+    coordinate(3)=1;
 
-    toReturn = Q*toReturn.t();
-    toReturn/= toReturn(3);
-    return true;
+    coordinate = cv::Mat(coordinate);
+
+    coordinate = Q * coordinate.t();
+    coordinate /= coordinate(3);
+    
+    return coordinate;
+  } else {
+    coordinate(0) = 0;
+    coordinate(1) = 0;
+    coordinate(2) = 0;
+    coordinate(3) = 0;
+    return coordinate;
   }
-  else
-  {
-    return false;
+}
+
+cv::Mat Utility::calcCoordinate(cv::Mat const& Q, float dValue, int x, int y)
+{
+  cv::Mat_<float> coordinate(1,4);
+  dValue /= 16.0;
+  
+  if(dValue > 0) {
+    coordinate(0)=x;
+    coordinate(1)=y;
+    coordinate(2)=dValue;
+    coordinate(3)=1;
+
+    coordinate = cv::Mat(coordinate);
+
+    coordinate = Q * coordinate.t();
+    coordinate /= coordinate(3);
+    
+    return coordinate;
+  } else {
+    coordinate(0) = 0;
+    coordinate(1) = 0;
+    coordinate(2) = 0;
+    coordinate(3) = 0;
+    return coordinate;
   }
 }
 
@@ -230,24 +262,6 @@ float Utility::calcDistance(cv::Mat const& Q, float const& dispValue, int binnin
     else
       return distance/2;
   }
-}
-
-void Utility::calcDistanceMap(cv::Mat &distanceMap, cv::Mat const& dMap, cv::Mat const& Q, int binning)
-{
-  //TODO:
-  // although it is inefficient and slow
-  // TODO: fix crash when copying the distances into the mat
-  distanceMap = cv::Mat(dMap.rows, dMap.cols, CV_32F);
-  for(int r = 0; r < dMap.rows; ++r)
-  {
-    for(int c = 0; c < dMap.cols; ++c)
-    {
-      cv::Mat_<float> coord(1,4);
-      coord = calcCoordinate(coord, Q, dMap, c,r);
-      distanceMap.at<float>(c,r) = 0;
-      coord.release();
-    }
-  } 
 }
 
 float Utility::calcMeanDisparity(cv::Mat const& matrix)
@@ -400,4 +414,19 @@ std::string Utility::type2str(int type) {
   r += (chans+'0');
 
   return r;
+}
+
+float Utility::calcMagnitude(cv::Mat const& input)
+{
+  float mag = 0;
+  std::for_each(input.begin<float>(), input.end<float>(), [&mag](float value) {
+   mag += pow(value,2);
+  });
+  return mag;
+}
+
+float Utility::calcAngle(cv::Mat const& m1, cv::Mat const& m2)
+{
+  float angle = m1.dot(m2) / (calcMagnitude(m1)*calcMagnitude(m2));
+  return acos(angle) * (180/ M_PI);
 }
