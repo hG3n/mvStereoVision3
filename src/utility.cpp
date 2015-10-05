@@ -419,14 +419,24 @@ std::string Utility::type2str(int type) {
 float Utility::calcMagnitude(cv::Mat const& input)
 {
   float mag = 0;
-  std::for_each(input.begin<float>(), input.end<float>(), [&mag](float value) {
-   mag += pow(value,2);
+  std::for_each(input.begin<float>(), input.end<float>(), [&mag](float value){
+    mag += pow(value,2);
   });
-  return mag;
+
+  return sqrt(mag);
 }
 
 float Utility::calcAngle(cv::Mat const& m1, cv::Mat const& m2)
 {
-  float angle = m1.dot(m2) / (calcMagnitude(m1)*calcMagnitude(m2));
+  float mag1 = calcMagnitude(m1);
+  float mag2 = calcMagnitude(m2);
+
+  // if the length of one of the vectors cannot be calculated return 0
+  // reason for that moght be an invalid disparity value
+  if(mag1 == 0 || mag2 == 0) {
+    return 0.0;
+  }
+
+  float angle = m1.dot(m2) / (mag1 * mag2);
   return acos(angle) * (180/ M_PI);
 }
