@@ -15,14 +15,16 @@ class MeanDisparityDetection: public ObstacleDetection
   // mode enum
   enum MODE {MEAN_DISTANCE, MEAN_VALUE};
 
-  MeanDisparityDetection(cv::Mat const&);
+  MeanDisparityDetection();
   ~MeanDisparityDetection();
+
+  void init(cv::Mat const&);
 
   // getter
   std::vector<float> getMeanMap() const;
   std::vector<float> getMeanDistanceMap() const;
 
-  /* virtual */ void build(cv::Mat const&, int, int );
+  /* virtual */ void build(cv::Mat const&, int, int);
   /* virtual */ void detectObstacles();
   /* virtual */ void print_on(std::ostream&) const;
 
@@ -31,7 +33,7 @@ class MeanDisparityDetection: public ObstacleDetection
     std::map<int, std::string>        mPositions;
     std::vector<float>                mMeanMap;
     std::vector<float>                mMeanDistanceMap;
-    cv::Mat                           mQMat;
+    cv::Mat                           mQ_32F;
 };
 
 #endif //__OBSTACLE_DETECION__H

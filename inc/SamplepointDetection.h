@@ -14,10 +14,10 @@ class SamplepointDetection: public ObstacleDetection
 {
   public:
     // constructor / destructor
-    SamplepointDetection(cv::Mat const&);
+    SamplepointDetection();
     ~SamplepointDetection();
 
-    void init(cv::Mat const&);
+    void init(cv::Mat const&, cv::Mat const&);
 
     std::vector<Samplepoint> getSamplepointVec() const;
     cv::Mat_<float>          getCenterPoint() const;
@@ -29,9 +29,9 @@ class SamplepointDetection: public ObstacleDetection
   private:
     std::string              mTag;
     std::vector<Samplepoint> mSPVec;
-    cv::Mat                  mQ;
     std::vector<float>       mDistanceVec;
     cv::Mat_<float>          mCenterPoint;
+    cv::Mat                  mQ_32F;
 };
 
 #endif

@@ -1,12 +1,12 @@
 #include "MeanDisparityDetection.h"
 #include "utility.h"
 
-MeanDisparityDetection::MeanDisparityDetection(cv::Mat const& Q):
+MeanDisparityDetection::MeanDisparityDetection():
   mTag("MEAN DISPARITY DETECTION\t"),
   mPositions(),
   mMeanMap(),
   mMeanDistanceMap(),
-  mQMat(Q)
+  mQ_32F()
 {
   // reserve memory for distance maps
   mMeanDistanceMap.reserve(81);
@@ -56,6 +56,14 @@ MeanDisparityDetection::~MeanDisparityDetection()
 
 
 // -----------------------------------------------------------------------------
+// --- init --------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void MeanDisparityDetection::init(cv::Mat const& Q)
+{
+  mQ_32F = Q;
+}
+
+// -----------------------------------------------------------------------------
 // --- getter ------------------------------------------------------------------
 // -----------------------------------------------------------------------------
 std::vector<float> MeanDisparityDetection::getMeanMap() const
@@ -96,7 +104,7 @@ void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
       for (unsigned int i = 0; i < numSubimages; ++i) {
         for (unsigned int j = 0; j < numSubimages; ++j) {
           float meanValue = Utility::calcMeanDisparity(subimages[i][j]);
-          mMeanDistanceMap.push_back(Utility::calcDistance(mQMat,meanValue,binning));
+          mMeanDistanceMap.push_back(Utility::calcDistance(mQ_32F,meanValue,binning));
         }
       }
       break;
@@ -143,5 +151,5 @@ void MeanDisparityDetection::detectObstacles()
 /*virtual*/ void MeanDisparityDetection::print_on(std::ostream& out) const {
   out << mTag 
       << "\nmean distance map length: " << mMeanDistanceMap.size() 
-      << "\nqMatrix:                  " << mQMat.size() << " ";
+      << "\nqMatrix:                  " << mQ_32F.size() << " ";
 }
