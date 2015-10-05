@@ -426,7 +426,7 @@ float Utility::calcMagnitude(cv::Mat const& input)
   return sqrt(mag);
 }
 
-float Utility::calcAngle(cv::Mat const& m1, cv::Mat const& m2)
+float Utility::calcAngle(cv::Mat& m1, cv::Mat& m2)
 {
   float mag1 = calcMagnitude(m1);
   float mag2 = calcMagnitude(m2);
@@ -436,6 +436,13 @@ float Utility::calcAngle(cv::Mat const& m1, cv::Mat const& m2)
   if(mag1 == 0 || mag2 == 0) {
     return 0.0;
   }
+
+  // if the matrix dimensions don't match transpose one of the matrices
+  // in order to make the dotproduct work
+  if(m1.cols != m2.rows) {
+    m1 = m1.t();
+  }
+
 
   float angle = m1.dot(m2) / (mag1 * mag2);
   return acos(angle) * (180/ M_PI);

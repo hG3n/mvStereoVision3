@@ -75,7 +75,7 @@ namespace Utility
   std::string type2str(int);
 
   float calcMagnitude(cv::Mat const &);
-  float calcAngle(cv::Mat const&, cv::Mat const&);
+  float calcAngle(cv::Mat&, cv::Mat&);
 }
 
 #endif //__UTILITY__H__
