@@ -68,7 +68,20 @@ void mouseClick(int event, int x, int y,int flags, void* userdata) {
     double d = static_cast<float>(dMapRaw.at<short>(y,x));
     float distance = Utility::calcDistance(Q_32F, d, 1);
     std::cout << "disparityValue: " << d << "  distance: " << distance << std::endl;
-    std::cout << "x: " << x << " | y: " << y  << std::endl;
+
+    cv::Mat_<float> vec = Utility::calcCoordinate(Q_32F, d, x ,y);
+
+    // std::cout << "coordinate: " << vec << std::endl;
+
+    // define center point 
+    cv::Mat_<float> center(4,1);
+    center(0) = 0.0f;
+    center(1) = 0.0f;
+    center(2) = 1.0f;
+    center(3) = 0.0f;
+
+    std::cout << "angle " << Utility::calcAngle(center, vec) << std::endl;
+
   }
 }
 
@@ -228,10 +241,12 @@ int main(int argc, char* argv[])
   // std::vector<float> distanceMap;
 
   ObstacleDetection *o;
-  MeanDisparityDetection m(Q_32F);
-  SamplepointDetection sd(Q_32F);
+  MeanDisparityDetection m;
+  SamplepointDetection sd;
+  
+  m.init(Q_32F);
   // o = &m;
-  sd.init(dMapWork);
+  sd.init(dMapWork, Q_32F);
   o = &sd;
 
   running = true;
@@ -260,13 +275,15 @@ int main(int argc, char* argv[])
       if(binning == 0) {
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_u);
-        sd.init(dMapWork);
+        // m.init(Q_32F)
+        sd.init(dMapWork, Q_32F);
         if(!detectionIsInit)
           o = &sd;
       } else if (binning == 1) {
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_b);
-        sd.init(dMapWork);
+        // m.init(Q_32F)
+        sd.init(dMapWork, Q_32F);
         if(!detectionIsInit)
           o = &sd;
       }
