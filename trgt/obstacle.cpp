@@ -74,14 +74,13 @@ void mouseClick(int event, int x, int y,int flags, void* userdata) {
     // std::cout << "coordinate: " << vec << std::endl;
 
     // define center point 
-    cv::Mat_<float> center(4,1);
+    cv::Mat_<float> center(1,4);
     center(0) = 0.0f;
     center(1) = 0.0f;
     center(2) = 1.0f;
     center(3) = 0.0f;
 
     std::cout << "angle " << Utility::calcAngle(center, vec) << std::endl;
-
   }
 }
 
@@ -130,7 +129,6 @@ void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b,
 
   std::cout << "roi b" << roi_b << std::endl;
   std::cout << "roi u" << roi_u << std::endl;
-
 }
 
 void createSamplepointArray(std::vector<Samplepoint>& toFill, cv::Mat const& reference) {
@@ -275,17 +273,26 @@ int main(int argc, char* argv[])
       if(binning == 0) {
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_u);
+
         // m.init(Q_32F)
         sd.init(dMapWork, Q_32F);
         if(!detectionIsInit)
           o = &sd;
+
+        Q = stereo.getQMatrix();
+        Q.convertTo(Q_32F,CV_32F);
+
       } else if (binning == 1) {
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_b);
+
         // m.init(Q_32F)
         sd.init(dMapWork, Q_32F);
         if(!detectionIsInit)
           o = &sd;
+
+        Q = stereo.getQMatrix();
+        Q.convertTo(Q_32F,CV_32F);
       }
 
       o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_DISTANCE);
