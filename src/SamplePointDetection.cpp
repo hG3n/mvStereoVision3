@@ -31,10 +31,10 @@ void SamplepointDetection::init(cv::Mat const& reference, cv::Mat const& Q) {
 
   // center point of the image with z in 'inf'
   mCenterPoint = cv::Mat_<float>(1,4);
-  mCenterPoint(0) = reference.cols/2;
-  mCenterPoint(1) = reference.rows/2;
-  mCenterPoint(2) = 10000;
-  mCenterPoint(3) = 0;
+  mCenterPoint(0) = 0.0f;
+  mCenterPoint(1) = 0.0f;
+  mCenterPoint(2) = 1.0f;
+  mCenterPoint(3) = 0.0f;
 }
 
 // -----------------------------------------------------------------------------
@@ -71,7 +71,7 @@ void SamplepointDetection::detectObstacles()
   std::cout << mCenterPoint << std::endl;
   std::cout << temp.t() << std::endl;
 #undef N
-  float angle = Utility::calcAngle(mCenterPoint,temp.t());
+  float angle = Utility::calcAngle(mCenterPoint,temp);
   std::cout << angle << std::endl;
 }
 
