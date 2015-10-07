@@ -71,8 +71,6 @@ void SamplepointDetection::build(cv::Mat const& dMap, int binning, int mode)
 // -----------------------------------------------------------------------------
 void SamplepointDetection::detectObstacles() 
 {
-  cv::Mat_<float> imageCenter(1,4);
-
   // float value = mSPVec[500].value;
   // cv::Mat_<float> temp = Utility::calcCoordinate(mQ_32F, value, mSPVec[500].center.x, mSPVec[500].center.y);
 
