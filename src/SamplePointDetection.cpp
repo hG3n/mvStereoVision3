@@ -67,10 +67,7 @@ void SamplepointDetection::detectObstacles()
 {
   float value = mSPVec[500].value;
   cv::Mat_<float> temp = Utility::calcCoordinate(mQ_32F, value, mSPVec[500].center.x, mSPVec[500].center.y);
-#define N 32
-  std::cout << mCenterPoint << std::endl;
-  std::cout << temp.t() << std::endl;
-#undef N
+
   float angle = Utility::calcAngle(mCenterPoint,temp);
   std::cout << angle << std::endl;
 }
