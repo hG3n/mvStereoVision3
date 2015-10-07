@@ -49,7 +49,7 @@ int exposure = 10000;
 float gain = 4.0;
 bool hdr = false;
 
-bool detectionIsInit = false;
+bool detectionIsInit = true;
 
 void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity) {
   while(running)
@@ -247,10 +247,6 @@ int main(int argc, char* argv[])
   std::vector<std::vector<cv::Mat>> subimages;
   subimages.reserve(9);
 
-  // init obstacle detection
-  // obstacleDetection obst;
-  // std::vector<float> distanceMap;
-
   ObstacleDetection *o;
   MeanDisparityDetection m;
   SamplepointDetection sd;
@@ -265,7 +261,6 @@ int main(int argc, char* argv[])
   while(running)
   {
     stereo.getRectifiedImagepair(s);
-    // std::cout << frame << std::endl;
     cv::imshow("Left", s.mLeft);
     cv::imshow("Right", s.mRight);
 
@@ -278,7 +273,7 @@ int main(int argc, char* argv[])
       // camera shift is roughly calculated by a third of numDisparity
       // added up with the used blocksize
       if(reload) {
-        std::cout << dMapRaw.size() << std::endl;
+        std::cout << "dMapRaw size: " << dMapRaw.size() << std::endl;
         createDMapROIS(dMapRaw, dMapROI_u, dMapROI_b, binning, reload);
         reload = false;
       }
@@ -287,25 +282,25 @@ int main(int argc, char* argv[])
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_u);
 
-        // m.init(Q_32F)
-        sd.init(dMapWork, Q_32F);
-        if(!detectionIsInit)
+        if(detectionIsInit){
+          Q = stereo.getQMatrix();
+          Q.convertTo(Q_32F,CV_32F);
+          sd.init(dMapWork, Q_32F);
           o = &sd;
-
-        Q = stereo.getQMatrix();
-        Q.convertTo(Q_32F,CV_32F);
+          detectionIsInit = false;
+        }
 
       } else if (binning == 1) {
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_b);
-
-        // m.init(Q_32F)
-        sd.init(dMapWork, Q_32F);
-        if(!detectionIsInit)
+   
+        if(detectionIsInit) {
+          Q = stereo.getQMatrix();
+          Q.convertTo(Q_32F,CV_32F);
+          sd.init(dMapWork, Q_32F);
           o = &sd;
-
-        Q = stereo.getQMatrix();
-        Q.convertTo(Q_32F,CV_32F);
+          detectionIsInit = false;
+        }
       }
 
       o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_DISTANCE);
@@ -348,10 +343,9 @@ int main(int argc, char* argv[])
           left->setBinning(binning);
           right->setBinning(binning);
           stereo.resetRectification();
-          detectionIsInit = false;
+          detectionIsInit = true;
           // reload parameters in order to recompute pixelshift
           Disparity::loadSGBMParameters("./configs/sgbm.yml", disparitySGBM, sgbmParameters);
-          detectionIsInit = false;
           reload = true;
           break;
         }
