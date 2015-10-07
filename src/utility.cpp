@@ -439,10 +439,11 @@ float Utility::calcAngle(cv::Mat& m1, cv::Mat& m2)
 
   // if the matrix dimensions don't match transpose one of the matrices
   // in order to make the dotproduct work
-  if(m1.cols != m2.rows) {
+  if(m1.cols != m2.cols) {
     m1 = m1.t();
   }
 
+  std::cout << m1 << "  " << m2 << std::endl;
 
   float angle = m1.dot(m2) / (mag1 * mag2);
   return acos(angle) * (180/ M_PI);
