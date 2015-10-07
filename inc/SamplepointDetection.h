@@ -31,6 +31,7 @@ class SamplepointDetection: public ObstacleDetection
     std::vector<Samplepoint> mSPVec;
     std::vector<float>       mDistanceVec;
     cv::Mat_<float>          mCenterPoint;
+    cv::Point                mImageCenter;
     cv::Mat                  mQ_32F;
 };
 
