@@ -67,10 +67,10 @@ void mouseClick(int event, int x, int y,int flags, void* userdata) {
   {
     double d = static_cast<float>(dMapRaw.at<short>(y,x));
     float distance = Utility::calcDistance(Q_32F, d, 1);
-    std::cout << "disparityValue: " << d << "  distance: " << distance << std::endl;
+    // std::cout << "disparityValue: " << d << "  distance: " << distance << std::endl;
 
-    cv::Mat_<float> vec = Utility::calcCoordinate(Q_32F, d, x ,y);
-
+    // cv::Mat_<float> vec = Utility::calcCoordinate(Q_32F, d, x ,y);
+    // std::cout << vec << std::endl;
     // std::cout << "coordinate: " << vec << std::endl;
 
     // define center point 
@@ -80,7 +80,20 @@ void mouseClick(int event, int x, int y,int flags, void* userdata) {
     center(2) = 1.0f;
     center(3) = 0.0f;
 
-    std::cout << "angle " << Utility::calcAngle(center, vec) << std::endl;
+    // std::cout << "angle " << Utility::calcAngle(center, vec) << std::endl;
+
+    cv::Mat_<float> back(4,1);
+    back(0) = 0.0f;
+    back(1) = 0.0f;
+    back(2) = 3000.0f;
+    back(3) = 0.0f;
+
+    std::cout << back << std::endl;
+    std::cout << Q_32F << std::endl;
+
+    cv::Mat_<float> newMat = Q_32F / back;
+
+
   }
 }
 
