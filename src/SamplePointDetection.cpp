@@ -35,6 +35,12 @@ void SamplepointDetection::init(cv::Mat const& reference, cv::Mat const& Q) {
   mCenterPoint(1) = 0.0f;
   mCenterPoint(2) = 1.0f;
   mCenterPoint(3) = 0.0f;
+
+  // set image center point according to principal point given in mQ_32F
+  mImageCenter.x = mQ_32F.at<float>(0,3);
+  mImageCenter.y = mQ_32F.at<float>(1,3);
+ 
+  std::cout << mImageCenter << std::endl;
 }
 
 // -----------------------------------------------------------------------------
@@ -65,8 +71,10 @@ void SamplepointDetection::build(cv::Mat const& dMap, int binning, int mode)
 // -----------------------------------------------------------------------------
 void SamplepointDetection::detectObstacles() 
 {
-  float value = mSPVec[500].value;
-  cv::Mat_<float> temp = Utility::calcCoordinate(mQ_32F, value, mSPVec[500].center.x, mSPVec[500].center.y);
+  cv::Mat_<float> imageCenter(1,4);
+
+  // float value = mSPVec[500].value;
+  // cv::Mat_<float> temp = Utility::calcCoordinate(mQ_32F, value, mSPVec[500].center.x, mSPVec[500].center.y);
 
   float angle = Utility::calcAngle(mCenterPoint,temp);
   std::cout << angle << std::endl;
