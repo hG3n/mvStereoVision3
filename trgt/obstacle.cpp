@@ -344,9 +344,9 @@ int main(int argc, char* argv[])
           right->setBinning(binning);
           stereo.resetRectification();
           detectionIsInit = true;
+          reload = true;
           // reload parameters in order to recompute pixelshift
           Disparity::loadSGBMParameters("./configs/sgbm.yml", disparitySGBM, sgbmParameters);
-          reload = true;
           break;
         }
         case 'f':
@@ -354,7 +354,7 @@ int main(int argc, char* argv[])
           break;
         case 'r':
           Disparity::loadSGBMParameters("./configs/sgbm.yml", disparitySGBM, sgbmParameters);
-          detectionIsInit = false;
+          detectionIsInit = true;
           reload = true;
           break;
         case '0':
