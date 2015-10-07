@@ -30,11 +30,11 @@ void SamplepointDetection::init(cv::Mat const& reference, cv::Mat const& Q) {
   mQ_32F = Q;
 
   // center point of the image with z in 'inf'
-  mCenterPoint = cv::Mat_<float>(1,4);
-  mCenterPoint(0) = 0.0f;
-  mCenterPoint(1) = 0.0f;
-  mCenterPoint(2) = 1.0f;
-  mCenterPoint(3) = 0.0f;
+  mCenterVec = cv::Mat_<float>(1,4);
+  mCenterVec(0) = 0.0f;
+  mCenterVec(1) = 0.0f;
+  mCenterVec(2) = 1.0f;
+  mCenterVec(3) = 0.0f;
 
   // set image center point according to principal point given in mQ_32F
   mImageCenter.x = mQ_32F.at<float>(0,3);
@@ -53,7 +53,7 @@ std::vector<Samplepoint> SamplepointDetection::getSamplepointVec() const
 
 cv::Mat_<float> SamplepointDetection::getCenterPoint() const 
 {
-  return mCenterPoint;
+  return mCenterVec;
 }
 
 // -----------------------------------------------------------------------------
@@ -74,8 +74,31 @@ void SamplepointDetection::detectObstacles()
   // float value = mSPVec[500].value;
   // cv::Mat_<float> temp = Utility::calcCoordinate(mQ_32F, value, mSPVec[500].center.x, mSPVec[500].center.y);
 
-  float angle = Utility::calcAngle(mCenterPoint,temp);
-  std::cout << angle << std::endl;
+  // calculate the distance of each samplepoint to the image center point
+  // TODO: just use points in a specific range
+  std::vector<float> distances_2d;
+  for(unsigned int i = 0; i < mSPVec.size(); ++i) {
+    /*
+      if(mSPVec[i].value > mRange.first && mSPVec[i].value < mRange.second) {
+        float distance = sqrt( pow(mImageCenter.x - mSPVec[i].center.x, 2) + pow(mImageCenter.y = mSPVec[i].center.y,2));
+        push samplepoints in new detection vector 
+        reasonable to add  distance to origin to samplepoint struct???
+
+      }
+    */
+    float temp = sqrt( pow(mImageCenter.x - mSPVec[i].center.x, 2) + pow(mImageCenter.y = mSPVec[i].center.y,2));
+    distances_2d.push_back(temp);
+  }
+
+  /* 
+    sort detection vector by distance and disparity value 
+    calculate angle between lowest 2 and center vector
+    return minimal angles (x and z) and distance of nearest 2 obstacles
+  */
+
+
+  // float angle = Utility::calcAngle(mCenterVec,temp);
+  // std::cout << angle << std::endl;
 }
 
 // -----------------------------------------------------------------------------
