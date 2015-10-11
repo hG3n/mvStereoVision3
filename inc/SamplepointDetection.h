@@ -10,29 +10,38 @@
 //OPENCV Stuff
 #include "opencv2/core.hpp"
 
+
+
 class SamplepointDetection: public ObstacleDetection
 {
   public:
-    // constructor / destructor
-    SamplepointDetection();
-    ~SamplepointDetection();
 
-    void init(cv::Mat const&, cv::Mat const&);
+    struct sort_distances {
+      bool operator ()(std::pair<int,float> const& lhs, std::pair<int,float> const& rhs) {
+        return lhs.second < rhs.second;
+      }
+    };
 
-    std::vector<Samplepoint> getSamplepointVec() const;
-    cv::Mat_<float>          getCenterPoint() const;
+  // constructor / destructor
+  SamplepointDetection();
+  ~SamplepointDetection();
 
-    /* virtual */ void print_on(std::ostream&) const;
-    /* virtual */ void build(cv::Mat const&, int, int);
-    /* virtual */ void detectObstacles();
+  void init(cv::Mat const&, cv::Mat const&);
+
+  std::vector<Samplepoint> getSamplepointVec() const;
+  cv::Mat_<float>          getCenterPoint() const;
+
+  /* virtual */ void print_on(std::ostream&) const;
+  /* virtual */ void build(cv::Mat const&, int, int);
+  /* virtual */ void detectObstacles();
 
   private:
-    std::string              mTag;
-    std::vector<Samplepoint> mSPVec;
-    std::vector<float>       mDistanceVec;
-    cv::Mat_<float>          mCenterVec;
-    cv::Point                mImageCenter;
-    cv::Mat                  mQ_32F;
+  std::string              mTag;
+  std::vector<Samplepoint> mSPVec;
+  std::vector<float>       mDistanceVec;
+  cv::Mat_<float>          mCenterVec;
+  cv::Point                mImageCenter;
+  cv::Mat                  mQ_32F;
 };
 
 #endif
