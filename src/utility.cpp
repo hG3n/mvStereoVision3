@@ -203,7 +203,7 @@ cv::Mat Utility::calcCoordinate(cv::Mat const& Q, cv::Mat const& dMap,int x,int 
 cv::Mat Utility::calcCoordinate(cv::Mat const& Q, float dValue, int x, int y)
 {
   cv::Mat_<float> coordinate(1,4);
-  dValue /= 16.0;
+  // dValue /= 16.0;
   
   if(dValue > 0) {
     coordinate(0)=x;
@@ -215,8 +215,8 @@ cv::Mat Utility::calcCoordinate(cv::Mat const& Q, float dValue, int x, int y)
 
     coordinate = Q * coordinate.t();
     coordinate /= coordinate(3);
-    
     return coordinate;
+  
   } else {
     coordinate(0) = 0;
     coordinate(1) = 0;
