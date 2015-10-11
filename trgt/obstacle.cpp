@@ -20,6 +20,8 @@
 #include <mutex>
 #include <condition_variable>
 
+#include <ctime>
+
 INITIALIZE_EASYLOGGINGPP
 std::string tag = " Main ";
 bool running = true;
@@ -67,33 +69,20 @@ void mouseClick(int event, int x, int y,int flags, void* userdata) {
   {
     double d = static_cast<float>(dMapRaw.at<short>(y,x));
     float distance = Utility::calcDistance(Q_32F, d, 1);
-    // std::cout << "disparityValue: " << d << "  distance: " << distance << std::endl;
+    std::cout << "disparityValue: " << d << "  distance: " << distance << std::endl;
 
-    // cv::Mat_<float> vec = Utility::calcCoordinate(Q_32F, d, x ,y);
-    // std::cout << vec << std::endl;
-    // std::cout << "coordinate: " << vec << std::endl;
+    cv::Mat_<float> coordinate(1,4);
+    coordinate(0) = 0.0f;
+    coordinate(1) = 0.0f;
+    coordinate(2) = 1000.0f;
+    coordinate(3) = 1.0f;
 
-    // define center point 
-    cv::Mat_<float> center(1,4);
-    center(0) = 0.0f;
-    center(1) = 0.0f;
-    center(2) = 1.0f;
-    center(3) = 0.0f;
+    cv::Mat Q_inv = Q.inv(cv::DECOMP_SVD);
+    Q_inv.convertTo(Q_inv, CV_32FC1);
 
-    // std::cout << "angle " << Utility::calcAngle(center, vec) << std::endl;
-
-    cv::Mat_<float> back(4,1);
-    back(0) = 0.0f;
-    back(1) = 0.0f;
-    back(2) = 3000.0f;
-    back(3) = 0.0f;
-
+    cv::Mat_<float> back = Q_inv * coordinate.t();
+    // back(2) *= 16;
     std::cout << back << std::endl;
-    std::cout << Q_32F << std::endl;
-
-    cv::Mat_<float> newMat = Q_32F / back;
-
-
   }
 }
 
@@ -216,7 +205,7 @@ int main(int argc, char* argv[])
   // which is created during the rectification
   stereo.getRectifiedImagepair(s);
   Q = stereo.getQMatrix();
-  Q.convertTo(Q_32F,CV_32F);
+  Q.convertTo(Q_32F,CV_32FC1);
 
   // init OpenCV GUI objects
   cv::namedWindow("Left", cv::WINDOW_AUTOSIZE);
@@ -284,7 +273,7 @@ int main(int argc, char* argv[])
 
         if(detectionIsInit){
           Q = stereo.getQMatrix();
-          Q.convertTo(Q_32F,CV_32F);
+          Q.convertTo(Q_32F,CV_32FC1);
           sd.init(dMapWork, Q_32F);
           o = &sd;
           detectionIsInit = false;
@@ -296,7 +285,7 @@ int main(int argc, char* argv[])
    
         if(detectionIsInit) {
           Q = stereo.getQMatrix();
-          Q.convertTo(Q_32F,CV_32F);
+          Q.convertTo(Q_32F,CV_32FC1);
           sd.init(dMapWork, Q_32F);
           o = &sd;
           detectionIsInit = false;
