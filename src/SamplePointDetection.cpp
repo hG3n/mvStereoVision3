@@ -22,7 +22,7 @@ void SamplepointDetection::init(cv::Mat const& reference, cv::Mat const& Q) {
 
   for (int c = 1; c < distanceX; ++c) {
     for (int r = 1; r < distanceY; ++r) { 
-      mSPVec.push_back(Samplepoint(cv::Point(c*(reference.cols/distanceX), r*(reference.rows/distanceY)), 1));
+      mSPVec.push_back(Samplepoint(cv::Point(c*(reference.cols/distanceX), r*(reference.rows/distanceY)), 2));
     }
   }
 
@@ -71,25 +71,44 @@ void SamplepointDetection::build(cv::Mat const& dMap, int binning, int mode)
 // -----------------------------------------------------------------------------
 void SamplepointDetection::detectObstacles() 
 {
-  // float value = mSPVec[500].value;
-  // cv::Mat_<float> temp = Utility::calcCoordinate(mQ_32F, value, mSPVec[500].center.x, mSPVec[500].center.y);
-
-  // calculate the distance of each samplepoint to the image center point
   // TODO: just use points in a specific range
-  std::vector<float> distances_2d;
-  for(unsigned int i = 0; i < mSPVec.size(); ++i) {
-    /*
-      if(mSPVec[i].value > mRange.first && mSPVec[i].value < mRange.second) {
-        float distance = sqrt( pow(mImageCenter.x - mSPVec[i].center.x, 2) + pow(mImageCenter.y = mSPVec[i].center.y,2));
-        push samplepoints in new detection vector 
-        reasonable to add  distance to origin to samplepoint struct???
+  mRange.first = 700.0f;
+  mRange.second = 1400.0f;
 
+  std::vector<unsigned int> distance_indices;
+  for(unsigned int i = 0; i < mSPVec.size(); ++i) {
+      if(mSPVec[i].value > mRange.first && mSPVec[i].value < mRange.second) {
+        // store the index where an obstacle was found
+        distance_indices.push_back(i);
       }
-    */
-    float temp = sqrt( pow(mImageCenter.x - mSPVec[i].center.x, 2) + pow(mImageCenter.y = mSPVec[i].center.y,2));
-    distances_2d.push_back(temp);
   }
 
+  // calculate the distances of all sp within the  given range
+  // store ids and distances in 
+  std::vector<std::pair<int,float>> distance_storage;
+  for(unsigned int i = 0; i < distance_indices.size(); ++i) {
+    cv::Point current_center = mSPVec[distance_indices[i]].center;
+    float distance = sqrt(pow(current_center.x - mImageCenter.x,2 ) + pow(current_center.y - mImageCenter.y,2));
+    distance_storage.push_back(std::make_pair(distance_indices[i], distance));
+  }
+
+  std::sort(distance_storage.begin(), distance_storage.end(), SamplepointDetection::sort_distances());
+
+  for (int i = 0; i < distance_storage.size(); ++i)
+  {
+    std::cout << "id: " <<  distance_storage[i].first << " distance: " << distance_storage[i].second << std::endl;
+  }
+  std::cout << std::endl;
+
+
+  // reasonable to add distance to origin to samplepoint struct???
+  // save index of variable in order to identify the nearest points
+
+  /*  std::cout << distance_indices.size() << std::endl;
+    for(unsigned int i = 0; i < distance_indices.size(); ++i) {
+      std::cout << mSPVec[distance_indices[i]].center << std::endl;
+    }
+  */
   /* 
     sort detection vector by distance and disparity value 
     calculate angle between lowest 2 and center vector
