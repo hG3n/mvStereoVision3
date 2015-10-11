@@ -3,7 +3,7 @@ TARGETDIR = trgt
 TARGETOBJDIR = trgt_obj
 #compiler flags
 CC = g++-4.9
-CFLAGS  = -c -ggdb3 -fPIC -Wall -std=c++11 -fdiagnostics-color=auto -O0
+CFLAGS  = -c -ggdb3 -fPIC -Wall -std=c++11 -fdiagnostics-color=auto -O0 -fopenmp
 
 #source directories
 SRCDIR = src
