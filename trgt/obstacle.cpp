@@ -67,22 +67,14 @@ void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity) {
 void mouseClick(int event, int x, int y,int flags, void* userdata) {
   if  ( event == CV_EVENT_LBUTTONDOWN )
   {
-    double d = static_cast<float>(dMapRaw.at<short>(y,x));
-    float distance = Utility::calcDistance(Q_32F, d, 1);
+    float d = static_cast<float>(dMapRaw.at<short>(y,x));
+    dMapValues dMapValues;
+    dMapValues.dValue = d;
+    dMapValues.image_x = x;
+    dMapValues.image_y = y;
+
+    float distance = Utility::calcDistance(dMapValues, Q_32F, 1);
     std::cout << "disparityValue: " << d << "  distance: " << distance << std::endl;
-
-    cv::Mat_<float> coordinate(1,4);
-    coordinate(0) = 0.0f;
-    coordinate(1) = 0.0f;
-    coordinate(2) = 1000.0f;
-    coordinate(3) = 1.0f;
-
-    cv::Mat Q_inv = Q.inv(cv::DECOMP_SVD);
-    Q_inv.convertTo(Q_inv, CV_32FC1);
-
-    cv::Mat_<float> back = Q_inv * coordinate.t();
-    // back(2) *= 16;
-    std::cout << back << std::endl;
   }
 }
 
