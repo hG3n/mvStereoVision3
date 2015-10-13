@@ -226,13 +226,13 @@ cv::Mat Utility::calcCoordinate(cv::Mat const& Q, float dValue, int x, int y)
   }
 }
 
-float Utility::calcDistance(cv::Mat const& Q, float const& dispValue, int binning)
+float Utility::calcDistance(dMapValues dMapValues, cv::Mat const& Q, int binning)
 {
-  float d = dispValue / 16;
+  float d = dMapValues.dValue / 16;
   cv::Mat_<float> coordinateQ(1,4);
 
-  coordinateQ(0)=1;
-  coordinateQ(1)=1;
+  coordinateQ(0)=dMapValues.image_x;
+  coordinateQ(1)=dMapValues.image_y;
   coordinateQ(2)=d;
   coordinateQ(3)=1;
 
@@ -263,6 +263,23 @@ float Utility::calcDistance(cv::Mat const& Q, float const& dispValue, int binnin
       return distance/2;
   }
 }
+
+dMapValues Utility::calcDMapValues(cv::Mat_<float> const& c, cv::Mat const& Q)
+{
+  float disparity_value = (Q.at<float>(2,3)-c(2)*Q.at<float>(3,3)/
+                             (c(2) * Q.at<float>(3,2)));
+
+  float image_x = c(0) * (disparity_value * Q.at<float>(3,2) * Q.at<float>(3,3)) + Q.at<float>(0,3);
+  float image_y = c(1) * (disparity_value * Q.at<float>(3,2) * Q.at<float>(3,3)) + Q.at<float>(1,3);
+ 
+  dMapValues toReturn;
+  toReturn.image_x = image_x; 
+  toReturn.image_y = image_y; 
+  toReturn.dValue = disparity_value;
+
+  return toReturn;
+}
+
 
 float Utility::calcMeanDisparity(cv::Mat const& matrix)
 {

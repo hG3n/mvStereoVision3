@@ -46,6 +46,13 @@ struct CameraInit
 	bool init;
 };
 
+struct dMapValues
+{
+  float dValue;
+  float image_x;
+  float image_y;
+};
+
 namespace Utility
 {
 	// directory 
@@ -64,7 +71,8 @@ namespace Utility
 
   cv::Mat calcCoordinate(cv::Mat const&, cv::Mat const&,int,int);
   cv::Mat calcCoordinate(cv::Mat const&, float ,int,int);
-	float calcDistance(cv::Mat const&, float const&, int);
+	float calcDistance(dMapValues, cv::Mat const&, int);
+  dMapValues calcDMapValues(cv::Mat_<float> const&, cv::Mat const&);
 
   float                  calcMeanDisparity(cv::Mat const&);
   std::pair<float,float> calcMinMaxDisparity(cv::Mat const&);
