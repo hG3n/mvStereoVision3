@@ -87,6 +87,12 @@ void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
   std::vector<cv::Mat> temp;
   Utility::subdivideImage(dMap, binning, temp);
 
+  // create DTO for carrying the disparity values to calcDistance
+  dMapValues dMapValues;
+  dMapValues.image_x = 0;
+  dMapValues.image_y = 0;
+  dMapValues.dValue = 0;
+
   for (unsigned int i = 0; i < temp.size(); ++i) {
     std::vector<cv::Mat> temp2;
     Utility::subdivideImage(temp[i], binning, temp2);
@@ -104,7 +110,8 @@ void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
       for (unsigned int i = 0; i < numSubimages; ++i) {
         for (unsigned int j = 0; j < numSubimages; ++j) {
           float meanValue = Utility::calcMeanDisparity(subimages[i][j]);
-          mMeanDistanceMap.push_back(Utility::calcDistance(mQ_32F,meanValue,binning));
+          dMapValues.dValue = meanValue;
+          mMeanDistanceMap.push_back(Utility::calcDistance(dMapValues, mQ_32F,binning));
         }
       }
       break;
