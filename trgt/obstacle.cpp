@@ -68,37 +68,8 @@ void mouseClick(int event, int x, int y,int flags, void* userdata) {
   if  ( event == CV_EVENT_LBUTTONDOWN )
   {
     float d = static_cast<float>(dMapRaw.at<short>(y,x));
-    dMapValues dMapValues;
-    dMapValues.dValue = d;
-    dMapValues.image_x = x;
-    dMapValues.image_y = y;
-
-    cv::Mat_<float> c(1,3);
-    c(0) = 0;
-    c(1) = 0;
-    c(2) = 2000;
-
-    dMapValues = Utility::calcDMapValues(c,Q_32F);
-    std::cout << dMapValues.dValue << std::endl;
-
     // float distance = Utility::calcDistance(dMapValues, Q_32F, 1);
     // std::cout << "disparityValue: " << d << "  distance: " << distance << std::endl;
-  }
-}
-
-void subdivideImages(cv::Mat const& dMap, std::vector<std::vector<cv::Mat>> &subimages, int binning) {
-  // build a vector containing 81 elements
-  // the elements are ordererd along to a more coarser 3x3 grid
-  // after subdividing has been completed the images are ordered
-  // by 9 elements for every coarser 'subimage'
-  std::vector<cv::Mat> temp;
-  Utility::subdivideImage(dMapRaw, binning, temp);
-
-  for (unsigned int i = 0; i < temp.size(); ++i)
-  {
-    std::vector<cv::Mat> temp2;
-    Utility::subdivideImage(temp[i], binning, temp2);
-    subimages.push_back(temp2);
   }
 }
 
@@ -228,9 +199,6 @@ int main(int argc, char* argv[])
   createDMapROIS(dMapWork, dMapROI_u, dMapROI_b, 0);
 
   // create subimage container to save created subdivisions
-  std::vector<std::vector<cv::Mat>> subimages;
-  subimages.reserve(9);
-
   ObstacleDetection *o;
   MeanDisparityDetection m;
   SamplepointDetection sd;
