@@ -6,7 +6,7 @@ mTag("OBSTACLE DETECTION\t"),
 mRange(),
 mRangeDisparity()
 {
-  mRange = std::make_pair(1.0,2.0);
+  mRange = std::make_pair(0.6,1.0);
   LOG(INFO) << mTag << "created" << std::endl;
 }
 
