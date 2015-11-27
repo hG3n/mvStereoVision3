@@ -32,6 +32,7 @@ class ObstacleDetection
   protected:
     std::string               mTag;
     std::pair<float,float>    mRange;
+    std::pair<float,float>    mRangeDisparity;
 };
 
 std::ostream& operator<<(std::ostream&, ObstacleDetection const&);
