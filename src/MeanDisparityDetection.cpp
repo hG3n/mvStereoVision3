@@ -2,11 +2,11 @@
 #include "utility.h"
 
 MeanDisparityDetection::MeanDisparityDetection():
+  ObstacleDetection(),
   mTag("MEAN DISPARITY DETECTION\t"),
   mPositions(),
   mMeanMap(),
-  mMeanDistanceMap(),
-  mQ_32F()
+  mMeanDistanceMap()
 {
   // reserve memory for distance maps
   mMeanDistanceMap.reserve(81);
@@ -58,14 +58,38 @@ MeanDisparityDetection::~MeanDisparityDetection()
 // -----------------------------------------------------------------------------
 // --- init --------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void MeanDisparityDetection::init(cv::Mat const& Q)
+void MeanDisparityDetection::init(cv::Mat const& reference, cv::Mat const& Q)
 {
+  // clear existing Subimages
+  mSubimageVec.clear();
+
+  // set Q member variable
   mQ_32F = Q;
+
+  // horizontal and vertical distance according to the grade of segementation
+  int distanceX = reference.cols/9;
+  int distanceY = reference.rows/9;
+
+  // fill the Subimage vector with segmented image
+  for (int r = 0; r < 9; ++r) {
+    for (int c = 0; c < 9; ++c) {
+      int tl_x = r * distanceX;
+      int tl_y = c * distanceY;
+      int br_x = r * distanceX + distanceX;
+      int br_y = c * distanceY + distanceY;
+      mSubimageVec.push_back(Subimage(cv::Point(tl_x,tl_y), cv::Point(br_x, br_y)));
+    }
+  }
 }
 
 // -----------------------------------------------------------------------------
 // --- getter ------------------------------------------------------------------
 // -----------------------------------------------------------------------------
+std::vector<Subimage> MeanDisparityDetection::getSubimageVec() const
+{
+  return mSubimageVec;
+}
+
 std::vector<float> MeanDisparityDetection::getMeanMap() const
 {
   return mMeanMap;
@@ -82,58 +106,47 @@ std::vector<float> MeanDisparityDetection::getMeanDistanceMap() const
 // -----------------------------------------------------------------------------
 void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
 {
-  // subdivide dMap for every frame
-  std::vector<std::vector<cv::Mat>>  subimages;
-  std::vector<cv::Mat> temp;
-  Utility::subdivideImage(dMap, binning, temp);
-
   // create DTO for carrying the disparity values to calcDistance
   dMapValues dMapValues;
   dMapValues.image_x = 0;
   dMapValues.image_y = 0;
   dMapValues.dValue = 0;
-
-  for (unsigned int i = 0; i < temp.size(); ++i) {
-    std::vector<cv::Mat> temp2;
-    Utility::subdivideImage(temp[i], binning, temp2);
-    subimages.push_back(temp2);
-  }
   
   switch(mode) {
     case MODE::MEAN_DISTANCE:
     {
+      // clear previous distance values
       mMeanDistanceMap.clear();
-      unsigned int numSubimages = subimages.size();
-      if (numSubimages == 0)
-        LOG(INFO)<< mTag <<"Unable to build Mean-Map. No Subimages provided\n";
 
-      for (unsigned int i = 0; i < numSubimages; ++i) {
-        for (unsigned int j = 0; j < numSubimages; ++j) {
-          float meanValue = Utility::calcMeanDisparity(subimages[i][j]);
-          dMapValues.dValue = meanValue;
-          mMeanDistanceMap.push_back(Utility::calcDistance(dMapValues, mQ_32F,binning));
-        }
-      }
-      break;
+      cv::Mat_<float> temp_Q = mQ_32F;
+      std::for_each(mSubimageVec.begin(), mSubimageVec.end(), [this, &dMapValues, dMap, temp_Q, binning] (Subimage s) {
+        // calculate mean disparity value for each sample point
+        s.calculateSubimageValue(dMap);
+
+        // calculate distance according to the Subimage center
+        dMapValues.image_x = s.roi_center.x;
+        dMapValues.image_y = s.roi_center.y;
+        dMapValues.dValue = s.value;
+
+        // fill mean distance map with distances calculated
+        mMeanDistanceMap.push_back(Utility::calcDistance(dMapValues, temp_Q, binning));
+      });
     }
 
     case MODE::MEAN_VALUE:
     {
+      // clear previous disparity values
       mMeanMap.clear();
-      unsigned int numSubimages = subimages.size();
-      if (numSubimages == 0)
-        LOG(INFO)<< mTag <<"Unable to build Mean-Map. No Subimages provided\n";
 
-      for (unsigned int i = 0; i < numSubimages; ++i) {
-        for (unsigned int j = 0; j < numSubimages; ++j) {
-          float meanValue = Utility::calcMeanDisparity(subimages[i][j]);
-          mMeanMap.push_back(meanValue);
-        }
-      }
+      std::for_each(mSubimageVec.begin(), mSubimageVec.end(), [this, dMap] (Subimage s) {
+        // calculate mean disparity value for each sample point
+        s.calculateSubimageValue(dMap);
+
+        // fill mean map with median disparity values
+        mMeanMap.push_back(s.value);
+      });
     }
- 
   }
-
 }
 
 // -----------------------------------------------------------------------------
@@ -141,15 +154,7 @@ void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
 // -----------------------------------------------------------------------------
 void MeanDisparityDetection::detectObstacles()
 {
-  // analyzes each element in the mean vector, printing location of found obstacles
-  int i = 0;
-  auto range = mRange;  // seems like it is not possible to directly pass the member to the lambda
-  std::for_each(mMeanDistanceMap.begin(), mMeanDistanceMap.end(), [range, &i, this](float value) {
-    if(value >= range.first && value <= range.second) {
-      std::cout << "obstacle in: " << mPositions[i] << std::endl;
-    }
-    ++i;
-  });
+  std::cout << "foo" << std::endl;
 }
 
 // -----------------------------------------------------------------------------

@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "ObstacleDetection.h"
+#include "Subimage.h"
 
 //OPENCV Stuff
 #include "opencv2/opencv.hpp"
@@ -12,25 +13,27 @@
 class MeanDisparityDetection: public ObstacleDetection
 {
   public:
-  // mode enum
-  enum MODE {MEAN_DISTANCE, MEAN_VALUE};
+    // mode enum
+    enum MODE {MEAN_DISTANCE, MEAN_VALUE};
 
-  MeanDisparityDetection();
-  ~MeanDisparityDetection();
+    MeanDisparityDetection();
+    ~MeanDisparityDetection();
 
-  void init(cv::Mat const&);
+    void init(cv::Mat const&, cv::Mat const&);
 
-  // getter
-  std::vector<float> getMeanMap() const;
-  std::vector<float> getMeanDistanceMap() const;
+    // getter
+    std::vector<Subimage> getSubimageVec() const;
+    std::vector<float> getMeanMap() const;
+    std::vector<float> getMeanDistanceMap() const;
 
-  /* virtual */ void build(cv::Mat const&, int, int);
-  /* virtual */ void detectObstacles();
-  /* virtual */ void print_on(std::ostream&) const;
+    /* virtual */ void build(cv::Mat const&, int, int);
+    /* virtual */ void detectObstacles();
+    /* virtual */ void print_on(std::ostream&) const;
 
   private:
     std::string                       mTag;
     std::map<int, std::string>        mPositions;
+    std::vector<Subimage>             mSubimageVec;
     std::vector<float>                mMeanMap;
     std::vector<float>                mMeanDistanceMap;
     cv::Mat                           mQ_32F;
