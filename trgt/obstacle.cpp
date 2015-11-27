@@ -73,8 +73,16 @@ void mouseClick(int event, int x, int y,int flags, void* userdata) {
     dMapValues.image_x = x;
     dMapValues.image_y = y;
 
-    float distance = Utility::calcDistance(dMapValues, Q_32F, 1);
-    std::cout << "disparityValue: " << d << "  distance: " << distance << std::endl;
+    cv::Mat_<float> c(1,3);
+    c(0) = 0;
+    c(1) = 0;
+    c(2) = 2000;
+
+    dMapValues = Utility::calcDMapValues(c,Q_32F);
+    std::cout << dMapValues.dValue << std::endl;
+
+    // float distance = Utility::calcDistance(dMapValues, Q_32F, 1);
+    // std::cout << "disparityValue: " << d << "  distance: " << distance << std::endl;
   }
 }
 
@@ -186,8 +194,6 @@ int main(int argc, char* argv[])
     return 0;
 
   // create stereo image pair
-  // Stereopair s{cv::Mat{left->getImageHeight(), left->getImageWidth(), CV_8UC1, cv::Scalar::all(0)},
-                // cv::Mat{right->getImageHeight(), right->getImageWidth(), CV_8UC1, cv::Scalar::all(0)}};
   Stereopair s;
 
   char key = 0;
@@ -213,10 +219,7 @@ int main(int argc, char* argv[])
                                          32*sgbmParameters.blockSize*sgbmParameters.blockSize);
   std::thread disparity(disparityCalcSGBM,std::ref(s),std::ref(disparitySGBM));
 
-  // load disparity parameters to get intial values
-  // if(!loadDisparityParameters("./configs/sgbm.yml"))
-  //   return 0;
-
+  // load parameters for sgbm
   if(!Disparity::loadSGBMParameters("./configs/sgbm.yml", disparitySGBM, sgbmParameters))
     return 0;
 
@@ -231,11 +234,11 @@ int main(int argc, char* argv[])
   ObstacleDetection *o;
   MeanDisparityDetection m;
   SamplepointDetection sd;
-  
-  m.init(Q_32F);
-  // o = &m;
-  sd.init(dMapWork, Q_32F);
-  o = &sd;
+
+  m.init(dMapWork, Q_32F);
+  o = &m;
+  sd.init(dMapWork,Q_32F);
+  // o = &sd;
 
   running = true;
   int frame = 0;
@@ -266,8 +269,11 @@ int main(int argc, char* argv[])
         if(detectionIsInit){
           Q = stereo.getQMatrix();
           Q.convertTo(Q_32F,CV_32FC1);
-          sd.init(dMapWork, Q_32F);
-          o = &sd;
+          
+          m.init(dMapWork,Q_32F);
+          // sd.init(dMapWork,Q_32F);
+          o = &m;
+          // o = &sd;
           detectionIsInit = false;
         }
 
@@ -278,14 +284,17 @@ int main(int argc, char* argv[])
         if(detectionIsInit) {
           Q = stereo.getQMatrix();
           Q.convertTo(Q_32F,CV_32FC1);
-          sd.init(dMapWork, Q_32F);
-          o = &sd;
+         
+          m.init(dMapWork,Q_32F);
+          // sd.init(dMapWork,Q_32F);
+          o = &m;
+          // o = &sd;
           detectionIsInit = false;
         }
       }
 
       o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_DISTANCE);
-      // o->detectObstacles();
+      o->detectObstacles();
 
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
