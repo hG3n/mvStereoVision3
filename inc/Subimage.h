@@ -6,10 +6,26 @@
 
 struct Subimage
 {
-  Subimage(cv::Point const&, cv::Point const&);
-  ~Subimage();
+  
+  Subimage(cv::Point const& tl, cv::Point const& br):
+    tl(tl),
+    br(br),
+    roi_center(),
+    value()
+    {
+      int temp_x = br.x - tl.x;
+      int temp_y = br.y - tl.y;
+      roi_center = cv::Point(tl.x + (temp_x/2), tl.y + (temp_y/2));
+    }
 
-  void calculateSubimageValue(cv::Mat const&);
+  ~Subimage() {}
+
+  void calculateSubimageValue(cv::Mat const& dMap)
+  {
+    cv::Rect roi(tl,br);
+    cv::Mat temp = dMap(roi);
+    value = Utility::calcMeanDisparity(temp);
+  }
 
   // member
   cv::Point   tl;
