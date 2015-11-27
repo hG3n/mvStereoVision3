@@ -15,6 +15,7 @@ struct Samplepoint
   // member
   cv::Point   center;
   int         radius;
+  cv::Rect    roi;
   float       value;
 };
 
