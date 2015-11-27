@@ -67,7 +67,7 @@ void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity) {
 void mouseClick(int event, int x, int y,int flags, void* userdata) {
   if  ( event == CV_EVENT_LBUTTONDOWN )
   {
-    float d = static_cast<float>(dMapRaw.at<short>(y,x));
+    // float d = static_cast<float>(dMapRaw.at<short>(y,x));
     // float distance = Utility::calcDistance(dMapValues, Q_32F, 1);
     // std::cout << "disparityValue: " << d << "  distance: " << distance << std::endl;
   }
@@ -102,23 +102,6 @@ void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b,
 
   std::cout << "roi b" << roi_b << std::endl;
   std::cout << "roi u" << roi_u << std::endl;
-}
-
-void createSamplepointArray(std::vector<Samplepoint>& toFill, cv::Mat const& reference) {
-  int distanceX = reference.cols/8;
-  int distanceY = reference.rows/8;
-
-  std::cout << reference.cols/distanceX << std::endl;
-  std::cout << reference.cols/distanceY << std::endl;
-
-  for (int c = 1; c < distanceX; ++c)
-  {
-    for (int r = 1; r < distanceY; ++r)
-    { 
-      std::cout << "c: " << c << " r: " << r << std::endl;
-      toFill.push_back(Samplepoint(cv::Point(c*(reference.cols/distanceX), r*(reference.rows/distanceY)), 1));
-    }
-  }
 }
 
 int main(int argc, char* argv[])
@@ -262,7 +245,7 @@ int main(int argc, char* argv[])
       }
 
       o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_DISTANCE);
-      o->detectObstacles();
+      // o->detectObstacles();
 
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
@@ -353,6 +336,7 @@ int main(int argc, char* argv[])
           break;
         case 'd':
           o->detectObstacles();
+          std::cout << " " << std::endl;
           break;
         case 'n':
         {
