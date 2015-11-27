@@ -1,8 +1,8 @@
 #include "SamplepointDetection.h"
 
 SamplepointDetection::SamplepointDetection():
-  mTag("SAMPLEPOINT DETECTION\t"),
-  mSPVec()
+  ObstacleDetection(),
+  mTag("SAMPLEPOINT DETECTION\t")
 {}
 
 SamplepointDetection::~SamplepointDetection()
@@ -16,6 +16,9 @@ void SamplepointDetection::init(cv::Mat const& reference, cv::Mat const& Q) {
   // clear created samplepoints
   mSPVec.clear();
 
+  // set Q member variable
+  mQ_32F = Q;
+
   // create new samplepoints
   int distanceX = reference.cols/8;
   int distanceY = reference.rows/8;
@@ -25,9 +28,6 @@ void SamplepointDetection::init(cv::Mat const& reference, cv::Mat const& Q) {
       mSPVec.push_back(Samplepoint(cv::Point(c*(reference.cols/distanceX), r*(reference.rows/distanceY)), 2));
     }
   }
-
-  // set Q member variable
-  mQ_32F = Q;
 
   // center point of the image with z in 'inf'
   mCenterVec = cv::Mat_<float>(1,4);
@@ -40,7 +40,22 @@ void SamplepointDetection::init(cv::Mat const& reference, cv::Mat const& Q) {
   mImageCenter.x = mQ_32F.at<float>(0,3);
   mImageCenter.y = mQ_32F.at<float>(1,3);
  
-  std::cout << mImageCenter << std::endl;
+  // set disparityRange
+  cv::Mat_<float> lower(1,3);
+  lower(0) = 0;
+  lower(1) = 0;
+  lower(2) = mRange.first * 1000;
+
+  cv::Mat_<float> upper(1,3);
+  upper(0) = 0;
+  upper(1) = 0;
+  upper(2) = mRange.second * 1000;
+
+  dMapValues d_lower = Utility::calcDMapValues(lower, mQ_32F);
+  std::cout << d_lower.dValue << std::endl;
+  dMapValues d_upper = Utility::calcDMapValues(upper, mQ_32F);
+
+  mRangeDisparity = std::make_pair(d_lower.dValue, d_upper.dValue);
 }
 
 // -----------------------------------------------------------------------------
@@ -72,8 +87,8 @@ void SamplepointDetection::build(cv::Mat const& dMap, int binning, int mode)
 void SamplepointDetection::detectObstacles() 
 {
   // TODO: just use points in a specific range
-  mRange.first = 700.0f;
-  mRange.second = 1400.0f;
+ std::cout << mRangeDisparity.first << std::endl;
+ std::cout << mRangeDisparity.second << std::endl;
 
   std::vector<unsigned int> distance_indices;
   for(unsigned int i = 0; i < mSPVec.size(); ++i) {
@@ -94,7 +109,7 @@ void SamplepointDetection::detectObstacles()
 
   std::sort(distance_storage.begin(), distance_storage.end(), SamplepointDetection::sort_distances());
 
-  for (int i = 0; i < distance_storage.size(); ++i)
+  for (unsigned int i = 0; i < distance_storage.size(); ++i)
   {
     std::cout << "id: " <<  distance_storage[i].first << " distance: " << distance_storage[i].second << std::endl;
   }
