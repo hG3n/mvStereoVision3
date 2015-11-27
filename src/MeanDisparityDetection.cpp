@@ -128,8 +128,6 @@ void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
         dMapValues.image_y = s.roi_center.y;
         dMapValues.dValue = s.value;
 
-        std::cout << roi_center << std::endl;
-
         // fill mean distance map with distances calculated
         mMeanDistanceMap.push_back(Utility::calcDistance(dMapValues, temp_Q, binning));
       });
@@ -158,9 +156,15 @@ void MeanDisparityDetection::detectObstacles()
 {
   for(unsigned int i = 0; i < mMeanDistanceMap.size(); ++i) {
     if(mMeanDistanceMap[i] < mRange.second && mMeanDistanceMap[i] > mRange.first) {
-      std::cout << "Obstacle found in: " << mPositions[i] << std::endl;
+      // std::cout << "Obstacle found in: " << mPositions[i] << std::endl;
     }
   }
+
+  for (int i = 0; i < mSubimageVec.size(); ++i)
+  {
+    std::cout << i << ": " << mSubimageVec[i].roi_center << std::endl;
+  }
+
 }
 
 // -----------------------------------------------------------------------------
