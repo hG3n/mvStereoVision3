@@ -85,7 +85,7 @@ void MeanDisparityDetection::init(cv::Mat const& reference, cv::Mat const& Q, fl
   }
 
   // create empty pointcloud
-  mPointcloud = cv::Mat::zeros(reference.cols, reference.rows, CV_32F);
+  mPointcloud = cv::Mat<cv::Vec3f>(reference.cols, reference.rows);
 
   // initialize disparityRange
   cv::Mat_<float> lower(1,3);
@@ -102,7 +102,8 @@ void MeanDisparityDetection::init(cv::Mat const& reference, cv::Mat const& Q, fl
   dMapValues d_upper = Utility::calcDMapValues(upper, mQ_32F);
 
   mRangeDisparity = std::make_pair(d_lower.dValue, d_upper.dValue);
-  LOG(INFO) << mTag << "Detection Range Disparity: (" << mRangeDisparity.first << " , " << mRangeDisparity.second << ")\n";
+
+  LOG(INFO) << mTag << "Disparty Range: (" << d_lower.dValue << " , " << d_upper.dValue << ")" ;
 }
 
 // -----------------------------------------------------------------------------
@@ -193,8 +194,6 @@ void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
 // -----------------------------------------------------------------------------
 void MeanDisparityDetection::detectObstacles()
 {
-  std::cout << MODE::MEAN_VALUE << std::endl;
-
   if(mDetectionMode == MODE::MEAN_DISTANCE) {
    
     for(unsigned int i = 0; i < mMeanDistanceMap.size(); ++i) {
@@ -204,21 +203,19 @@ void MeanDisparityDetection::detectObstacles()
     }
 
   } else if (mDetectionMode == MODE::MEAN_VALUE) {
+
     for(unsigned int i = 0; i < mMeanMap.size(); ++i) {
-      std::cout << mMeanMap[i] << std::endl;
-      if(mMeanMap[i] < mRangeDisparity.second && mMeanMap[i] > mRangeDisparity.first) {
+      if(mMeanMap[i] < mRangeDisparity.first && mMeanMap[i] > mRangeDisparity.second) {
         std::cout << "Obstacle found in: " << i << std::endl;
-        // get current subimage
+        std::cout << mMeanMap[i] << std::endl;
         Subimage temp_s = mSubimageVec[i];
-        mPointcloud.at<cv::Vec3f>(temp_s.roi_center.x, temp_s.roi_center.y) = 
-          Utility::calcCoordinate(mQ_32F, temp_s.value, temp_s.roi_center.x, temp_s.roi_center.y);
-        std::cout << mPointcloud.at<cv::Vec3f>(temp_s.roi_center.x, temp_s.roi_center.y) << std::endl;
+        // TODO write pointcloud to arbitrary vector
+        // mPointcloud.at<cv::Vec3f>(temp_s.roi_center.x, temp_s.roi_center.y) = 
+          // Utility::calcCoordinate(mQ_32F, temp_s.value, temp_s.roi_center.x, temp_s.roi_center.y);
       }
     }
 
   }
-
-
 }
 
 // -----------------------------------------------------------------------------

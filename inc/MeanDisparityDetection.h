@@ -41,7 +41,7 @@ class MeanDisparityDetection: public ObstacleDetection
     std::vector<float>                mMeanMap;
     std::vector<float>                mMeanDistanceMap;
     cv::Mat                           mQ_32F;
-    cv::Mat_<float>                   mPointcloud;
+    cv::Mat_<cv::Vec3f>               mPointcloud;
     int                               mDetectionMode;
 };
 
