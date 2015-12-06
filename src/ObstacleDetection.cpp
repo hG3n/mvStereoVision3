@@ -6,14 +6,13 @@ mTag("OBSTACLE DETECTION\t"),
 mRange(),
 mRangeDisparity()
 {
-  mRange = std::make_pair(0.6,1.0);
   LOG(INFO) << mTag << "created" << std::endl;
 }
 
 ObstacleDetection::~ObstacleDetection()
 {
   LOG(INFO) << mTag << "destroyed!" << std::endl;
-}
+}  
 
 // -----------------------------------------------------------------------------
 // --- functions ---------------------------------------------------------------
@@ -21,7 +20,6 @@ ObstacleDetection::~ObstacleDetection()
 void ObstacleDetection::print_on(std::ostream& out) const
 {
   out << "Name: " << mTag;
-  // " Range: " << mRange;
 }
 
 // -----------------------------------------------------------------------------
