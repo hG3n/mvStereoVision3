@@ -15,6 +15,7 @@
 #include "SamplepointDetection.h"
 
 #include "Samplepoint.h"
+#include "Subimage.h"
 
 #include <thread>
 #include <mutex>
@@ -188,7 +189,7 @@ int main(int argc, char* argv[])
 
   m.init(dMapWork, Q_32F);
   o = &m;
-  sd.init(dMapWork,Q_32F);
+  // sd.init(dMapWork,Q_32F);
   // o = &sd;
 
   running = true;
@@ -216,7 +217,6 @@ int main(int argc, char* argv[])
       if(binning == 0) {
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_u);
-
         if(detectionIsInit){
           Q = stereo.getQMatrix();
           Q.convertTo(Q_32F,CV_32FC1);
@@ -231,7 +231,6 @@ int main(int argc, char* argv[])
       } else if (binning == 1) {
         dMapRaw.convertTo(dMapWork, CV_32F);
         dMapWork = dMapRaw(dMapROI_b);
-   
         if(detectionIsInit) {
           Q = stereo.getQMatrix();
           Q.convertTo(Q_32F,CV_32FC1);
@@ -260,7 +259,7 @@ int main(int argc, char* argv[])
       newDisparityMap = false;
     }
 
-    key = cv::waitKey(5);
+    key = cv::waitKey(1);
 
     // keypress stuff
     if(key > 0)
