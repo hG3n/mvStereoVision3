@@ -29,7 +29,7 @@ void SamplepointDetection::init(cv::Mat const& reference, cv::Mat const& Q) {
     }
   }
 
-  // center point of the image with z in 'inf'
+  // center point of the image with z in 
   mCenterVec = cv::Mat_<float>(1,4);
   mCenterVec(0) = 0.0f;
   mCenterVec(1) = 0.0f;
