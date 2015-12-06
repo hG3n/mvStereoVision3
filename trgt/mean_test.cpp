@@ -52,7 +52,8 @@ bool hdr = false;
 
 bool detectionIsInit = true;
 
-void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity) {
+void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
+{
   while(running)
   {
     std::unique_lock<std::mutex> ul(disparityLock);
@@ -63,7 +64,16 @@ void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity) {
   }
 }
 
-void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b, int binning, bool reload = false) {
+void mouseClick(int event, int x, int y,int flags, void* userdata)
+{
+  if  ( event == CV_EVENT_LBUTTONDOWN ) {
+    float d = static_cast<float>(dMapRaw.at<short>(y,x));
+    printf("Disparity at: (%i,%i) = %f\n",x,y,d);
+  }
+}
+
+void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b, int binning, bool reload = false)
+{
   // the best value to work with in order to include everything and dont exclude important work
   int pixelShift = sgbmParameters.numDisp / 2;
   if(pixelShift % 2 == 1) {
@@ -146,7 +156,9 @@ int main(int argc, char* argv[])
   cv::namedWindow("Left", cv::WINDOW_AUTOSIZE);
   cv::namedWindow("Right", cv::WINDOW_AUTOSIZE);
   cv::namedWindow("SGBM" ,1);
- 
+  cv::setMouseCallback("SGBM", mouseClick, NULL);
+
+
   // create disparity object and connected thread
   disparitySGBM = cv::StereoSGBM::create(sgbmParameters.minDisp,
                                          sgbmParameters.numDisp,
@@ -166,7 +178,7 @@ int main(int argc, char* argv[])
   // create subimage container to save created subdivisions
   ObstacleDetection *o;
   MeanDisparityDetection m;
-  m.init(dMapWork, Q_32F, 1.0, 2.0);
+  m.init(dMapWork, Q_32F, 0.6, 1.0);
   o = &m;
 
   running = true;
@@ -198,7 +210,7 @@ int main(int argc, char* argv[])
           Q = stereo.getQMatrix();
           Q.convertTo(Q_32F,CV_32FC1);
           
-          m.init(dMapWork,Q_32F, 1.0, 2.0);
+          m.init(dMapWork,Q_32F, 0.6, 1.0);
           o = &m;
           detectionIsInit = false;
         }
@@ -210,7 +222,7 @@ int main(int argc, char* argv[])
           Q = stereo.getQMatrix();
           Q.convertTo(Q_32F,CV_32FC1);
          
-          m.init(dMapWork,Q_32F, 1.0, 2.0);
+          m.init(dMapWork,Q_32F, 0.6, 1.0);
           o = &m;
           detectionIsInit = false;
         }
