@@ -202,8 +202,10 @@ cv::Mat Utility::calcCoordinate(cv::Mat const& Q, cv::Mat const& dMap,int x,int 
 
 cv::Mat Utility::calcCoordinate(cv::Mat const& Q, float dValue, int x, int y)
 {
+  printf("coordinate calculation called!\n");
+
   cv::Mat_<float> coordinate(1,4);
-  // dValue /= 16.0;
+  dValue /= 16.0;
   
   if(dValue > 0) {
     coordinate(0)=x;
@@ -266,9 +268,6 @@ float Utility::calcDistance(dMapValues dMapValues, cv::Mat const& Q, int binning
 
 dMapValues Utility::calcDMapValues(cv::Mat_<float> const& c, cv::Mat const& Q)
 {
-  // float disparity_value = (Q.at<float>(2,3)-c(2)*Q.at<float>(3,3)/
-                             // (c(2) * Q.at<float>(3,2)));
-
   float numerator = Q.at<float>(2,3) - c(2) * Q.at<float>(3,3);
   float denominator = c(2) * Q.at<float>(3,2);
   float disparity_value = numerator/denominator;
@@ -276,12 +275,10 @@ dMapValues Utility::calcDMapValues(cv::Mat_<float> const& c, cv::Mat const& Q)
   float image_x = c(0) * (disparity_value * Q.at<float>(3,2) * Q.at<float>(3,3)) + Q.at<float>(0,3);
   float image_y = c(1) * (disparity_value * Q.at<float>(3,2) * Q.at<float>(3,3)) + Q.at<float>(1,3);
 
-  printf("x: %f y: %f \n", image_x, image_y);
- 
   dMapValues toReturn;
   toReturn.image_x = image_x; 
-  toReturn.image_y = image_y; 
-  toReturn.dValue = disparity_value;
+  toReturn.image_y = image_y;
+  toReturn.dValue = disparity_value * 16;
 
   return toReturn;
 }
