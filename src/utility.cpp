@@ -236,8 +236,8 @@ float Utility::calcDistance(dMapValues dMapValues, cv::Mat const& Q, int binning
   coordinateQ(2)=d;
   coordinateQ(3)=1;
 
-  if(binning == 0)
-  {
+  // if(binning == 0)
+  // {
     coordinateQ = (Q)*coordinateQ.t();
     coordinateQ/=coordinateQ(3);
   
@@ -245,32 +245,38 @@ float Utility::calcDistance(dMapValues dMapValues, cv::Mat const& Q, int binning
     coordinateQ.release();
 
     return distance;
-  }
-  else
-  {
-    coordinateQ = (Q/2)*coordinateQ.t();
-    coordinateQ/=coordinateQ(3);
+  // }
+  // else
+  // {
+  //   coordinateQ = (Q/2)*coordinateQ.t();
+  //   coordinateQ/=coordinateQ(3);
     
-    float distance = coordinateQ(2)/1000;
-    coordinateQ.release();
+  //   float distance = coordinateQ(2)/1000;
+  //   coordinateQ.release();
 
-    // because binning is half of the image
-    if(cvIsInf(distance))
-    {
-      return distance;
-    }
-    else
-      return distance/2;
-  }
+  //   // because binning is half of the image
+  //   if(cvIsInf(distance))
+  //   {
+  //     return distance;
+  //   }
+  //   else
+  //     return distance/2;
+  // }
 }
 
 dMapValues Utility::calcDMapValues(cv::Mat_<float> const& c, cv::Mat const& Q)
 {
-  float disparity_value = (Q.at<float>(2,3)-c(2)*Q.at<float>(3,3)/
-                             (c(2) * Q.at<float>(3,2)));
+  // float disparity_value = (Q.at<float>(2,3)-c(2)*Q.at<float>(3,3)/
+                             // (c(2) * Q.at<float>(3,2)));
+
+  float numerator = Q.at<float>(2,3) - c(2) * Q.at<float>(3,3);
+  float denominator = c(2) * Q.at<float>(3,2);
+  float disparity_value = numerator/denominator;
 
   float image_x = c(0) * (disparity_value * Q.at<float>(3,2) * Q.at<float>(3,3)) + Q.at<float>(0,3);
   float image_y = c(1) * (disparity_value * Q.at<float>(3,2) * Q.at<float>(3,3)) + Q.at<float>(1,3);
+
+  printf("x: %f y: %f \n", image_x, image_y);
  
   dMapValues toReturn;
   toReturn.image_x = image_x; 
