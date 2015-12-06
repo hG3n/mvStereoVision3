@@ -6,7 +6,10 @@ MeanDisparityDetection::MeanDisparityDetection():
   mTag("MEAN DISPARITY DETECTION\t"),
   mPositions(),
   mMeanMap(),
-  mMeanDistanceMap()
+  mMeanDistanceMap(),
+  mQ_32F(),
+  mPointcloud(),
+  mDetectionMode()
 {
   // reserve memory for distance maps
   mMeanDistanceMap.reserve(81);
@@ -58,7 +61,7 @@ MeanDisparityDetection::~MeanDisparityDetection()
 // -----------------------------------------------------------------------------
 // --- init --------------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void MeanDisparityDetection::init(cv::Mat const& reference, cv::Mat const& Q)
+void MeanDisparityDetection::init(cv::Mat const& reference, cv::Mat const& Q, float min_distance, float max_distance)
 {
   // clear existing Subimages
   mSubimageVec.clear();
@@ -73,13 +76,33 @@ void MeanDisparityDetection::init(cv::Mat const& reference, cv::Mat const& Q)
   // fill the Subimage vector with segmented image
   for (int r = 0; r < 9; ++r) {
     for (int c = 0; c < 9; ++c) {
-      int tl_x = r * distanceX;
-      int tl_y = c * distanceY;
-      int br_x = r * distanceX + distanceX;
-      int br_y = c * distanceY + distanceY;
+      int tl_x = c * distanceX;
+      int tl_y = r * distanceY;
+      int br_x = c * distanceX + distanceX;
+      int br_y = r * distanceY + distanceY;
       mSubimageVec.push_back(Subimage(cv::Point(tl_x,tl_y), cv::Point(br_x, br_y)));
     }
   }
+
+  // create empty pointcloud
+  mPointcloud = cv::Mat::zeros(reference.cols, reference.rows, CV_32F);
+
+  // initialize disparityRange
+  cv::Mat_<float> lower(1,3);
+  lower(0) = 0;
+  lower(1) = 0;
+  lower(2) = min_distance * 1000;
+
+  cv::Mat_<float> upper(1,3);
+  upper(0) = 0;
+  upper(1) = 0;
+  upper(2) = max_distance * 1000;
+
+  dMapValues d_lower = Utility::calcDMapValues(lower, mQ_32F);
+  dMapValues d_upper = Utility::calcDMapValues(upper, mQ_32F);
+
+  mRangeDisparity = std::make_pair(d_lower.dValue, d_upper.dValue);
+  LOG(INFO) << mTag << "Detection Range Disparity: (" << mRangeDisparity.first << " , " << mRangeDisparity.second << ")\n";
 }
 
 // -----------------------------------------------------------------------------
@@ -100,6 +123,19 @@ std::vector<float> MeanDisparityDetection::getMeanDistanceMap() const
   return mMeanDistanceMap;
 }
 
+std::pair<int,int> MeanDisparityDetection::getRange() const
+{
+  return mRange;
+}
+
+// -----------------------------------------------------------------------------
+// --- setter ------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void MeanDisparityDetection::setRange(float min_distance, float max_distance)
+{
+  mRange.first = min_distance;
+  mRange.second = max_distance;
+}
 
 // -----------------------------------------------------------------------------
 // --- builder -----------------------------------------------------------------
@@ -115,6 +151,8 @@ void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
   switch(mode) {
     case MODE::MEAN_DISTANCE:
     {
+      mDetectionMode = MODE::MEAN_DISTANCE;
+
       // clear previous distance values
       mMeanDistanceMap.clear();
 
@@ -129,12 +167,13 @@ void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
         dMapValues.dValue = s.value;
 
         // fill mean distance map with distances calculated
-        mMeanDistanceMap.push_back(Utility::calcDistance(dMapValues, temp_Q, binning));
+        mMeanDistanceMap.push_back(Utility::calcDistance(dMapValues, temp_Q, 0));
       });
     }
 
     case MODE::MEAN_VALUE:
     {
+      mDetectionMode = MODE::MEAN_VALUE;
       // clear previous disparity values
       mMeanMap.clear();
 
@@ -154,16 +193,31 @@ void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
 // -----------------------------------------------------------------------------
 void MeanDisparityDetection::detectObstacles()
 {
-  for(unsigned int i = 0; i < mMeanDistanceMap.size(); ++i) {
-    if(mMeanDistanceMap[i] < mRange.second && mMeanDistanceMap[i] > mRange.first) {
-      // std::cout << "Obstacle found in: " << mPositions[i] << std::endl;
+  std::cout << MODE::MEAN_VALUE << std::endl;
+
+  if(mDetectionMode == MODE::MEAN_DISTANCE) {
+   
+    for(unsigned int i = 0; i < mMeanDistanceMap.size(); ++i) {
+      if(mMeanDistanceMap[i] < mRange.second && mMeanDistanceMap[i] > mRange.first) {
+        std::cout << "Obstacle found in: " << i << std::endl;
+      }
     }
+
+  } else if (mDetectionMode == MODE::MEAN_VALUE) {
+    for(unsigned int i = 0; i < mMeanMap.size(); ++i) {
+      std::cout << mMeanMap[i] << std::endl;
+      if(mMeanMap[i] < mRangeDisparity.second && mMeanMap[i] > mRangeDisparity.first) {
+        std::cout << "Obstacle found in: " << i << std::endl;
+        // get current subimage
+        Subimage temp_s = mSubimageVec[i];
+        mPointcloud.at<cv::Vec3f>(temp_s.roi_center.x, temp_s.roi_center.y) = 
+          Utility::calcCoordinate(mQ_32F, temp_s.value, temp_s.roi_center.x, temp_s.roi_center.y);
+        std::cout << mPointcloud.at<cv::Vec3f>(temp_s.roi_center.x, temp_s.roi_center.y) << std::endl;
+      }
+    }
+
   }
 
-  for (int i = 0; i < mSubimageVec.size(); ++i)
-  {
-    std::cout << i << ": " << mSubimageVec[i].roi_center << std::endl;
-  }
 
 }
 
