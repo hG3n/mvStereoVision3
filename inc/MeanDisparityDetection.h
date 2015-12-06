@@ -19,12 +19,16 @@ class MeanDisparityDetection: public ObstacleDetection
     MeanDisparityDetection();
     ~MeanDisparityDetection();
 
-    void init(cv::Mat const&, cv::Mat const&);
+    void init(cv::Mat const&, cv::Mat const&, float, float);
 
     // getter
     std::vector<Subimage> getSubimageVec() const;
     std::vector<float> getMeanMap() const;
     std::vector<float> getMeanDistanceMap() const;
+    std::pair<int,int> getRange() const;
+
+    // setter
+    void setRange(float, float);
 
     /* virtual */ void build(cv::Mat const&, int, int);
     /* virtual */ void detectObstacles();
@@ -37,6 +41,8 @@ class MeanDisparityDetection: public ObstacleDetection
     std::vector<float>                mMeanMap;
     std::vector<float>                mMeanDistanceMap;
     cv::Mat                           mQ_32F;
+    cv::Mat_<float>                   mPointcloud;
+    int                               mDetectionMode;
 };
 
 #endif //__OBSTACLE_DETECION__H
