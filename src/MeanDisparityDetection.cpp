@@ -221,7 +221,7 @@ void MeanDisparityDetection::detectObstacles()
         dMapValues.dValue = temp_s.value;
 
         // TODO write pointcloud to arbitrary vector
-        mPointcloud.at<cv::Vec3f>(temp_s.roi_center.x, temp_s.roi_center.y) =  
+        mPointcloud.at<cv::Vec3f>(temp_s.roi_center.y, temp_s.roi_center.x) = 
           Utility::calcDistance(dMapValues, mQ_32F, 1);
           // Utility::calcCoordinate(mQ_32F, temp_s.value, temp_s.roi_center.x, temp_s.roi_center.y);
       }
