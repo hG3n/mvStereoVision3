@@ -278,6 +278,7 @@ dMapValues Utility::calcDMapValues(cv::Mat_<float> const& c, cv::Mat const& Q)
   dMapValues toReturn;
   toReturn.image_x = image_x; 
   toReturn.image_y = image_y;
+  // multiply by 16 in order to invert the normalization
   toReturn.dValue = disparity_value * 16;
 
   return toReturn;
