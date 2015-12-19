@@ -20,3 +20,5 @@ docu/
 *.sublime-workspace
 #saved disparity map
 dMap.yml
+#saved pointclouds
+pcl/

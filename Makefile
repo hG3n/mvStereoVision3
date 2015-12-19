@@ -3,7 +3,7 @@ TARGETDIR = trgt
 TARGETOBJDIR = trgt_obj
 #compiler flags
 CC = g++-4.9
-CFLAGS  = -c -ggdb3 -fPIC -Wall -std=c++11 -fdiagnostics-color=auto -O0 -fopenmp
+CFLAGS  = -c -ggdb -fPIC -Wall -std=c++11 -fdiagnostics-color=auto -O0 -fexpensive-optimizations
 
 #source directories
 SRCDIR = src
@@ -138,6 +138,7 @@ $(OBJ): $(OBJDIR)/%.o :$(SRCDIR)/%.cpp
 
 clean:
 	$(RM) $(OBJDIR) $(BINDIR) $(TARGETOBJDIR)
+	$(RM) pcl/*
 
 #To compile mvIMPACTacquire SDK with c++11 find the file:
 #/opt/mvIMPACT_acquire/mvPropHandling/include/mvPropHandlingDatatypes.h
