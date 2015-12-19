@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
         }
       }
 
-      o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_VALUE);
+      o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_DISTANCE);
 
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
