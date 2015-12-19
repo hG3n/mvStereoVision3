@@ -1,6 +1,10 @@
 #include "MeanDisparityDetection.h"
 #include "utility.h"
 
+#include <chrono>
+#include <sstream>
+#include <ctime>
+
 MeanDisparityDetection::MeanDisparityDetection():
   ObstacleDetection(),
   mTag("MEAN DISPARITY DETECTION\t"),
@@ -85,7 +89,7 @@ void MeanDisparityDetection::init(cv::Mat const& reference, cv::Mat const& Q, fl
   }
 
   // create empty pointcloud
-  mPointcloud = cv::Mat<cv::Vec3f>(reference.cols, reference.rows);
+  mPointcloud = cv::Mat::zeros(reference.rows, reference.cols, CV_32F);
 
   // initialize disparityRange
   cv::Mat_<float> lower(1,3);
@@ -204,17 +208,25 @@ void MeanDisparityDetection::detectObstacles()
 
   } else if (mDetectionMode == MODE::MEAN_VALUE) {
 
+    dMapValues dMapValues;
     for(unsigned int i = 0; i < mMeanMap.size(); ++i) {
+      std::cout << mMeanMap[i] << std::endl;
       if(mMeanMap[i] < mRangeDisparity.first && mMeanMap[i] > mRangeDisparity.second) {
         std::cout << "Obstacle found in: " << i << std::endl;
         std::cout << mMeanMap[i] << std::endl;
         Subimage temp_s = mSubimageVec[i];
+
+        dMapValues.image_x = temp_s.roi_center.x;
+        dMapValues.image_y = temp_s.roi_center.y;
+        dMapValues.dValue = temp_s.value;
+
         // TODO write pointcloud to arbitrary vector
-        // mPointcloud.at<cv::Vec3f>(temp_s.roi_center.x, temp_s.roi_center.y) = 
+        mPointcloud.at<cv::Vec3f>(temp_s.roi_center.x, temp_s.roi_center.y) =  
+          Utility::calcDistance(dMapValues, mQ_32F, 1);
           // Utility::calcCoordinate(mQ_32F, temp_s.value, temp_s.roi_center.x, temp_s.roi_center.y);
       }
     }
-
+    cv::imwrite("pcl/pcl_" + std::to_string(clock()) + ".png", mPointcloud);
   }
 }
 
