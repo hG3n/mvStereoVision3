@@ -100,6 +100,14 @@ void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b,
   std::cout << "roi u" << roi_u << std::endl;
 }
 
+
+void drawFoundObstacles(cv::Mat& reference, std::vector<Subimage> const& obstacle_vec)
+{
+  std::for_each(obstacle_vec.begin(), obstacle_vec.end(), [&reference] (Subimage s){
+    cv::rectangle(reference, s.tl, s.br, cv::Scalar(0,0,255), -1);
+  });
+}
+
 int main(int argc, char* argv[])
 {
   std::string tag = "MAIN\t";
@@ -229,14 +237,19 @@ int main(int argc, char* argv[])
       }
 
       o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_DISTANCE);
+      o->detectObstacles();
+      std::vector<Subimage> found;
+      found = m.getFoundObstacles();
 
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
       cv::cvtColor(dMapNorm,dMapNorm,CV_GRAY2BGR);
 
-      if (view % 2 == 0) {
+      if (view % 3 == 0) {
         View::drawSubimageGrid(dMapNorm, binning);
         View::drawObstacleGrid(dMapNorm, binning);
+      } else {
+        drawFoundObstacles(dMapNorm, found);
       }
 
       cv::imshow("SGBM",dMapNorm);
