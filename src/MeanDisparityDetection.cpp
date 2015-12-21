@@ -14,7 +14,8 @@ MeanDisparityDetection::MeanDisparityDetection():
   mQ_32F(),
   mPointcloud(),
   mDetectionMode(),
-  mFoundObstacles()
+  mFoundObstacles(),
+  mObstacleCounter(0)
 {
   // reserve memory for distance maps
   mMeanDistanceMap.reserve(81);
@@ -233,10 +234,10 @@ void MeanDisparityDetection::detectObstacles()
         // TODO write pointcloud to arbitrary vector
         mPointcloud.at<float>(temp_s.roi_center.y, temp_s.roi_center.x) = 
           Utility::calcDistance(dMapValues, mQ_32F, 1);
-          // Utility::calcCoordinate(mQ_32F, temp_s.value, temp_s.roi_center.x, temp_s.roi_center.y);
       }
     }
-    cv::imwrite("pcl/pcl_" + std::to_string(clock()) + ".png", mPointcloud);
+    cv::imwrite("pcl/pcl_" + std::to_string(mObstacleCounter) + "_" + std::to_string(clock()) + ".png", mPointcloud);
+    ++mObstacleCounter;
   }
 }
 

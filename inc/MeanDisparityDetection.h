@@ -45,6 +45,7 @@ class MeanDisparityDetection: public ObstacleDetection
     cv::Mat_<float>                   mPointcloud;
     int                               mDetectionMode;
     std::vector<Subimage>             mFoundObstacles;
+    int                               mObstacleCounter;
 };
 
 #endif //__OBSTACLE_DETECION__H
