@@ -13,7 +13,8 @@ MeanDisparityDetection::MeanDisparityDetection():
   mMeanDistanceMap(),
   mQ_32F(),
   mPointcloud(),
-  mDetectionMode()
+  mDetectionMode(),
+  mFoundObstacles()
 {
   // reserve memory for distance maps
   mMeanDistanceMap.reserve(81);
@@ -133,6 +134,11 @@ std::pair<int,int> MeanDisparityDetection::getRange() const
   return mRange;
 }
 
+std::vector<Subimage> MeanDisparityDetection::getFoundObstacles() const
+{
+  return mFoundObstacles;  
+}
+
 // -----------------------------------------------------------------------------
 // --- setter ------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -161,6 +167,7 @@ void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
       // clear previous distance values
       mMeanDistanceMap.clear();
 
+      // temporary Q mat because passing a member to for_each seems not possible
       cv::Mat_<float> temp_Q = mQ_32F;
       std::for_each(mSubimageVec.begin(), mSubimageVec.end(), [this, &dMapValues, dMap, temp_Q, binning] (Subimage s) {
         // calculate mean disparity value for each sample point
@@ -181,11 +188,9 @@ void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
       mDetectionMode = MODE::MEAN_VALUE;
       // clear previous disparity values
       mMeanMap.clear();
-
       std::for_each(mSubimageVec.begin(), mSubimageVec.end(), [this, dMap] (Subimage s) {
         // calculate mean disparity value for each sample point
         s.calculateSubimageValue(dMap);
-
         // fill mean map with median disparity values
         mMeanMap.push_back(s.value);
       });
@@ -208,16 +213,19 @@ void MeanDisparityDetection::detectObstacles()
 
   } else if (mDetectionMode == MODE::MEAN_VALUE) {
     
+    // clear previous points from pointcloud
     mPointcloud.setTo(0);
+    mFoundObstacles.clear();
+
     dMapValues dMapValues;
-
     for(unsigned int i = 0; i < mMeanMap.size(); ++i) {
-      std::cout << mMeanMap[i] << std::endl;
       if(mMeanMap[i] < mRangeDisparity.first && mMeanMap[i] > mRangeDisparity.second) {
-        std::cout << "Obstacle found in: " << i << std::endl;
-        std::cout << mMeanMap[i] << std::endl;
-        Subimage temp_s = mSubimageVec[i];
 
+        // create temporary Subimage Object and add it to the found obstacles vector
+        Subimage temp_s = mSubimageVec[i];
+        mFoundObstacles.push_back(temp_s);
+
+        // fill dmap value dto with needed information to calculate the distance
         dMapValues.image_x = temp_s.roi_center.x;
         dMapValues.image_y = temp_s.roi_center.y;
         dMapValues.dValue = temp_s.value;
