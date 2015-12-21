@@ -207,8 +207,10 @@ void MeanDisparityDetection::detectObstacles()
     }
 
   } else if (mDetectionMode == MODE::MEAN_VALUE) {
-
+    
+    mPointcloud.setTo(0);
     dMapValues dMapValues;
+
     for(unsigned int i = 0; i < mMeanMap.size(); ++i) {
       std::cout << mMeanMap[i] << std::endl;
       if(mMeanMap[i] < mRangeDisparity.first && mMeanMap[i] > mRangeDisparity.second) {
@@ -221,7 +223,7 @@ void MeanDisparityDetection::detectObstacles()
         dMapValues.dValue = temp_s.value;
 
         // TODO write pointcloud to arbitrary vector
-        mPointcloud.at<cv::Vec3f>(temp_s.roi_center.y, temp_s.roi_center.x) = 
+        mPointcloud.at<float>(temp_s.roi_center.y, temp_s.roi_center.x) = 
           Utility::calcDistance(dMapValues, mQ_32F, 1);
           // Utility::calcCoordinate(mQ_32F, temp_s.value, temp_s.roi_center.x, temp_s.roi_center.y);
       }
