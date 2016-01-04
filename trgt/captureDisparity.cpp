@@ -15,8 +15,6 @@ INITIALIZE_EASYLOGGINGPP
 std::mutex disparityLockSGBM,disparityLockBM, disparityLockTM;
 std::condition_variable cond_var;
 bool newDisparityMap = false;
-bool newDisparityMap2 = false;
-bool newDisparityMap3 = false;
 bool running = true;
 cv::Mat dispMapSGBM, dispMapBM, dispMapNCC;
 
@@ -30,10 +28,7 @@ int numDispBM = 16;
 int windSizeBM = 5;
 
 double baseline;
-double fx;
-double fy;
-double cx;
-double cy;
+double fx, fy, cx, cy;
 
 cv::Mat R, R_32F;
 cv::Mat disparityMap_32FC1;
@@ -51,30 +46,6 @@ void disparityCalc(Stereopair const& s, cv::Ptr<cv::StereoSGBM> &disparity)
 	}
 }
 
-void disparityCalcBM( Stereopair const& s, cv::Ptr<cv::StereoBM> &disparity)
-{
-	while(running)
-	{
-		std::unique_lock<std::mutex> ul(disparityLockBM);
-		cond_var.wait(ul);
-		Disparity::bm(s, dispMapBM, disparity);
-		newDisparityMap2=true;
-	}
-}
-
-
-// void disparityCalcTM(Stereopair const& s)
-// {
-// 	// while(running)
-// 	// {
-// 		std::unique_lock<std::mutex> ul(disparityLockTM);
-// 		cond_var.wait(ul);
-// 		Disparity::tm(s,3);
-// 		newDisparityMap3 = true;
-// 	//}
-// }
-
-
 void changeNumDispSGBM(int, void*)
 {
   numDispSGBM+=numDispSGBM%16;
@@ -87,19 +58,6 @@ void changeNumDispSGBM(int, void*)
 
   cv::setTrackbarPos("Num Disp", "SGBM", numDispSGBM);
   disparitySGBM->setNumDisparities(numDispSGBM);
-}
-
-void changeNumDispBM(int, void*)
-{
-    numDispBM+=numDispBM%16;
-
-    if(numDispBM < 16)
-    {
-        numDispBM = 16;
-        cv::setTrackbarPos("Num Disp", "BM", numDispBM);
-    }
-    cv::setTrackbarPos("Num Disp", "BM", numDispBM);
-    disparityBM->setNumDisparities(numDispBM);
 }
 
 void changeWindSizeSGBM(int, void*)
@@ -115,20 +73,6 @@ void changeWindSizeSGBM(int, void*)
   cv::setTrackbarPos("Wind Size", "SGBM", windSizeSGBM);
   disparitySGBM->setBlockSize(windSizeSGBM);
   // disparitySGBM->create(0,numDispSGBM,windSizeSGBM,8*windSizeSGBM*windSizeSGBM,32*windSizeSGBM*windSizeSGBM);
-}
-
-void changeWindSizeBM(int, void*)
-{
-  if(windSizeBM%2 == 0)
-    windSizeBM+=1;
-
-  if(windSizeBM < 5)
-  {
-    windSizeBM = 5;
-    cv::setTrackbarPos("Wind Size", "BM", windSizeBM);
-  }
-  cv::setTrackbarPos("Wind Size", "BM", windSizeBM);
-  disparityBM->setBlockSize(windSizeBM);
 }
 
 void mouseClick(int event, int x, int y,int flags, void* userdata)
@@ -152,22 +96,7 @@ void mouseClick(int event, int x, int y,int flags, void* userdata)
     {
       std::cout <<"invalid disparity\n";
     }
-}
-     // else if  ( event == CV_EVENT_RBUTTONDOWN )
-     // {
-     //      std::cout << "Right button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
-     // }
-     // else if  ( event == CV_EVENT_MBUTTONDOWN )
-     // {
-     //      std::cout << "Middle button of the mouse is clicked - position (" << x << ", " << y << ")" << std::endl;
-     // }
-     // else if ( event == CV_EVENT_MOUSEMOVE )
-     // {
-     //      std::cout << "Mouse move over the window - position (" << x << ", " << y << ")" << std::endl;
-
-     // }
-
-
+  }
 }
 
 void initWindows()
@@ -178,21 +107,8 @@ void initWindows()
 	cv::createTrackbar("Num Disp", "SGBM", &numDispSGBM, 320, changeNumDispSGBM);
   cv::createTrackbar("Wind Size", "SGBM", &windSizeSGBM, 51, changeWindSizeSGBM);
 
-  // cv::createTrackbar("Num Disp", "BM", &numDispBM, 320, changeNumDispBM);
-  // cv::createTrackbar("Wind Size", "BM", &windSizeBM, 51, changeWindSizeBM);
-
   cv::setMouseCallback("SGBM", mouseClick, NULL);
 }
-
-// void disparityCalcNCC( Stereopair const& s) {
-// 	while(running)
-// 	{
-// 		std::unique_lock<std::mutex> ul(disparityLock);
-// 		cond_var.wait(ul);
-// 		Disparity::ncc(s, dispMapNCC);
-// 		newDisparityMap3=true;
-// 	}
-// }
 
 int main(int argc, char* argv[])
 {
