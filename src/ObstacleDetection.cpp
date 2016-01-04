@@ -12,7 +12,7 @@ mRangeDisparity()
 ObstacleDetection::~ObstacleDetection()
 {
   LOG(INFO) << mTag << "destroyed!" << std::endl;
-}  
+}
 
 // -----------------------------------------------------------------------------
 // --- functions ---------------------------------------------------------------
