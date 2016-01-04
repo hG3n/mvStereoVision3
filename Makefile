@@ -2,7 +2,7 @@
 TARGETDIR = trgt
 TARGETOBJDIR = trgt_obj
 #compiler flags
-CC = g++-4.9
+CC = g++
 #CFLAGS  = -c -ggdb -fPIC -Wall -std=c++11 -fdiagnostics-color=auto -O0 -fexpensive-optimizations
 CFLAGS  = -c -ggdb3 -fPIC -Wall -std=c++11 -fdiagnostics-color=auto
 
@@ -34,6 +34,11 @@ OPENCV = `pkg-config opencv --libs`
 
 LIBS = -lmvDeviceManager -lpthread $(OPENCV)
 
+sample_test: directories $(OBJ)
+	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/sample_test.cpp -o $(TARGETOBJDIR)/sample_test.o
+	@echo Compiled sample_test.cpp successfully!
+	@$(CC) $(OBJ) $(TARGETOBJDIR)/sample_test.o -o $(BINDIR)/sample_test $(LIB_PATH) $(LIBS)
+	@echo Linking complete!
 
 mean_test: directories $(OBJ)
 	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/mean_test.cpp -o $(TARGETOBJDIR)/mean_test.o
