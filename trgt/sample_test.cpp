@@ -308,7 +308,7 @@ int main(int argc, char* argv[])
           right->setExposure(exposure);
           break;
         case 'h':
-          if(!hdr){
+          if(!hdr) {
             left->enableHDR(Camera::hdr::ENABLE_HDR);
             right->enableHDR(Camera::hdr::ENABLE_HDR);
             hdr = true;

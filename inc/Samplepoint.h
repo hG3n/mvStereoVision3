@@ -24,13 +24,10 @@ struct Samplepoint
   // methods
   void calculateSamplepointValue(cv::Mat const& dMap)
   { 
-    if(radius > 0)
-    {
+    if(radius > 0) {
       cv::Mat temp = dMap(roi);
       value = Utility::calcMeanDisparity(temp);
-    } 
-    else
-    {
+    } else {
       value = dMap.at<short>(center.x, center.y);
     }
   }
