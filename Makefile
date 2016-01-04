@@ -46,6 +46,12 @@ mean_test: directories $(OBJ)
 	@$(CC) $(OBJ) $(TARGETOBJDIR)/mean_test.o -o $(BINDIR)/mean_test $(LIB_PATH) $(LIBS)
 	@echo Linking complete!
 
+ccDisparity: directories $(OBJ)
+	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/ccDisparity.cpp -o $(TARGETOBJDIR)/ccDisparity.o
+	@echo Compiled ccDisparity.cpp successfully!
+	$(CC) $(OBJ) $(TARGETOBJDIR)/ccDisparity.o -o $(BINDIR)/ccDisparity $(LIB_PATH) $(LIBS)
+	@echo Linking complete!
+
 obstacle: directories $(OBJ)
 	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/obstacle.cpp -o $(TARGETOBJDIR)/obstacle.o
 	@echo Compiled obstacle.cpp successfully!
