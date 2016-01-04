@@ -104,7 +104,7 @@ void createDMapROIS(cv::Mat const& reference, cv::Rect & roi_u, cv::Rect& roi_b,
 void drawFoundObstacles(cv::Mat& reference, std::vector<Samplepoint> const& obstacle_vec)
 {
   std::for_each(obstacle_vec.begin(), obstacle_vec.end(), [&reference] (Samplepoint s){
-    // cv::rectangle(reference, s.tl, s.br, cv::Scalar(0,0,255), -1);
+    cv::circle(reference, s.center, 3, cv::Scalar(0,0,255), -1);
   });
 }
 
@@ -186,7 +186,7 @@ int main(int argc, char* argv[])
   // create subimage container to save created subdivisions
   ObstacleDetection *o;
   SamplepointDetection sd;
-  sd.init(dMapWork, Q_32F, 0.6, 1.0);
+  sd.init(dMapWork, Q_32F, 0.1, 1.0);
   o = &sd;
 
   running = true;
@@ -236,7 +236,7 @@ int main(int argc, char* argv[])
         }
       }
 
-      o->build(dMapWork, binning,0);
+      o->build(dMapWork, binning, 0);
       o->detectObstacles();
       std::vector<Samplepoint> found;
       found = sd.getFoundObstacles();
