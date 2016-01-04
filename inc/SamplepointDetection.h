@@ -33,6 +33,7 @@ class SamplepointDetection: public ObstacleDetection
   cv::Mat_<float>           getCenterPoint() const;
   std::pair<int,int>        getRange() const;
   std::vector<Samplepoint>  getFoundObstacles() const;
+  cv::Mat_<float>           getPointcloud() const;
 
   // setter
   void setRange(float, float); 

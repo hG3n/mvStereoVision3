@@ -1,8 +1,20 @@
 #include "SamplepointDetection.h"
+#include "utility.h"
+
+#include <chrono>
+#include <sstream>
+#include <ctime>
 
 SamplepointDetection::SamplepointDetection():
   ObstacleDetection(),
-  mTag("SAMPLEPOINT DETECTION\t")
+  mTag("SAMPLEPOINT DETECTION\t"),
+  mSPVec(),
+  mDistanceVec(),
+  mCenterVec(),
+  mImageCenter(),
+  mQ_32F(),
+  mPointcloud(),
+  mFoundObstacles()
 {}
 
 SamplepointDetection::~SamplepointDetection()
@@ -83,6 +95,10 @@ std::vector<Samplepoint> SamplepointDetection::getFoundObstacles() const
   return mFoundObstacles;
 }
 
+cv::Mat_<float> SamplepointDetection::getPointcloud() const
+{
+  return mPointcloud;
+}
 
 // -----------------------------------------------------------------------------
 // --- setter ------------------------------------------------------------------
@@ -98,9 +114,14 @@ void SamplepointDetection::setRange(float min_distance, float max_distance)
 // -----------------------------------------------------------------------------
 void SamplepointDetection::build(cv::Mat const& dMap, int binning, int mode)
 {
-  for(unsigned int i = 0; i < mSPVec.size(); ++i) {
-    mSPVec[i].calculateSamplepointValue(dMap);
-  }
+  mDistanceVec.clear();
+
+  std::for_each(mSPVec.begin(), mSPVec.end(), [this, dMap] (Samplepoint s){
+    // calculate mean disparity value for each sample point
+    s.calculateSamplepointValue(dMap);
+    // fill mean map with median disparity values
+    mDistanceVec.push_back(s.value);
+  });
 }
 
 // -----------------------------------------------------------------------------
@@ -108,18 +129,42 @@ void SamplepointDetection::build(cv::Mat const& dMap, int binning, int mode)
 // -----------------------------------------------------------------------------
 void SamplepointDetection::detectObstacles() 
 {
+  // clear previous pointcloud
+  mPointcloud.setTo(0);
+  mFoundObstacles.clear();
+
+  dMapValues dMapValues;
+
+  for (unsigned int i = 0; i < mDistanceVec.size(); ++i) {
+    if(mDistanceVec[i] < mRangeDisparity.first && mDistanceVec[i] > mRangeDisparity.second) {
+     
+      // create temporary Samplepoint object and add it to the found obstacles vector
+      Samplepoint temp_s = mSPVec[i];
+      mFoundObstacles.push_back(temp_s);
+      
+      // fill dmap value dto with needed information to calculate the distance
+      dMapValues.image_x = temp_s.center.x;
+      dMapValues.image_y = temp_s.center.y;
+      dMapValues.dValue = mDistanceVec[i];
+      
+      // TODO write pointcloud to arbitrary vector
+      mPointcloud.at<float>(temp_s.center.y, temp_s.center.x) = 
+        Utility::calcDistance(dMapValues,mQ_32F,1);
+    }
+  }
+
   // TODO: just use points in a specific range
-  std::vector<unsigned int> distance_indices;
+/*  std::vector<unsigned int> distance_indices;
   for(unsigned int i = 0; i < mSPVec.size(); ++i) {
       if(mSPVec[i].value > mRange.first && mSPVec[i].value < mRange.second) {
         // store the index where an obstacle was found
         distance_indices.push_back(i);
       }
   }
-
+*/
   // calculate the distances of all sp within the  given range
   // store ids and distances in 
-  std::vector<std::pair<int,float>> distance_storage;
+/*  std::vector<std::pair<int,float>> distance_storage;
   for(unsigned int i = 0; i < distance_indices.size(); ++i) {
     cv::Point current_center = mSPVec[distance_indices[i]].center;
     float distance = sqrt(pow(current_center.x - mImageCenter.x,2 ) + pow(current_center.y - mImageCenter.y,2));
@@ -133,7 +178,7 @@ void SamplepointDetection::detectObstacles()
     std::cout << "id: " <<  distance_storage[i].first << " distance: " << distance_storage[i].second << std::endl;
   }
   std::cout << std::endl;
-
+*/
 
   // reasonable to add distance to origin to samplepoint struct???
   // save index of variable in order to identify the nearest points
