@@ -26,10 +26,16 @@ class SamplepointDetection: public ObstacleDetection
   SamplepointDetection();
   ~SamplepointDetection();
 
-  void init(cv::Mat const&, cv::Mat const&);
+  void init(cv::Mat const&, cv::Mat const&, float, float);
 
-  std::vector<Samplepoint> getSamplepointVec() const;
-  cv::Mat_<float>          getCenterPoint() const;
+  // getter
+  std::vector<Samplepoint>  getSamplepointVec() const;
+  cv::Mat_<float>           getCenterPoint() const;
+  std::pair<int,int>        getRange() const;
+  std::vector<Samplepoint>  getFoundObstacles() const;
+
+  // setter
+  void setRange(float, float); 
 
   /* virtual */ void print_on(std::ostream&) const;
   /* virtual */ void build(cv::Mat const&, int, int);
@@ -42,6 +48,8 @@ class SamplepointDetection: public ObstacleDetection
     cv::Mat_<float>          mCenterVec;
     cv::Point                mImageCenter;
     cv::Mat                  mQ_32F;
+    cv::Mat_<float>          mPointcloud;
+    std::vector<Samplepoint> mFoundObstacles;
 };
 
 #endif

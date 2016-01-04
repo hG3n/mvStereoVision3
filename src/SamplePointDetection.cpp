@@ -11,7 +11,7 @@ SamplepointDetection::~SamplepointDetection()
 // -----------------------------------------------------------------------------
 // --- functions ---------------------------------------------------------------
 // -----------------------------------------------------------------------------
-void SamplepointDetection::init(cv::Mat const& reference, cv::Mat const& Q) {
+void SamplepointDetection::init(cv::Mat const& reference, cv::Mat const& Q, float min_distance, float max_distance) {
   
   // clear created samplepoints
   mSPVec.clear();
@@ -40,19 +40,21 @@ void SamplepointDetection::init(cv::Mat const& reference, cv::Mat const& Q) {
   mImageCenter.x = mQ_32F.at<float>(0,3);
   mImageCenter.y = mQ_32F.at<float>(1,3);
  
-  // set disparityRange
+  // create empty pointcloud
+  mPointcloud = cv::Mat::zeros(reference.rows, reference.cols, CV_32F);
+
+  // intialize disparityRange
   cv::Mat_<float> lower(1,3);
   lower(0) = 0;
   lower(1) = 0;
-  lower(2) = mRange.first * 1000;
+  lower(2) = min_distance * 1000;
 
   cv::Mat_<float> upper(1,3);
   upper(0) = 0;
   upper(1) = 0;
-  upper(2) = mRange.second * 1000;
+  upper(2) = max_distance * 1000;
 
   dMapValues d_lower = Utility::calcDMapValues(lower, mQ_32F);
-  std::cout << d_lower.dValue << std::endl;
   dMapValues d_upper = Utility::calcDMapValues(upper, mQ_32F);
 
   mRangeDisparity = std::make_pair(d_lower.dValue, d_upper.dValue);
@@ -71,6 +73,26 @@ cv::Mat_<float> SamplepointDetection::getCenterPoint() const
   return mCenterVec;
 }
 
+std::pair<int,int> SamplepointDetection::getRange() const
+{
+  return mRange;
+}
+
+std::vector<Samplepoint> SamplepointDetection::getFoundObstacles() const
+{
+  return mFoundObstacles;
+}
+
+
+// -----------------------------------------------------------------------------
+// --- setter ------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+void SamplepointDetection::setRange(float min_distance, float max_distance)
+{
+  mRange.first = min_distance;
+  mRange.second = max_distance;
+}
+
 // -----------------------------------------------------------------------------
 // --- builder -----------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -87,9 +109,6 @@ void SamplepointDetection::build(cv::Mat const& dMap, int binning, int mode)
 void SamplepointDetection::detectObstacles() 
 {
   // TODO: just use points in a specific range
- std::cout << mRangeDisparity.first << std::endl;
- std::cout << mRangeDisparity.second << std::endl;
-
   std::vector<unsigned int> distance_indices;
   for(unsigned int i = 0; i < mSPVec.size(); ++i) {
       if(mSPVec[i].value > mRange.first && mSPVec[i].value < mRange.second) {
