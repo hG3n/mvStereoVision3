@@ -22,3 +22,5 @@ docu/
 dMap.yml
 #saved pointclouds
 pcl/
+#ignore any kind of archive files
+*.zip
