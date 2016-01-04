@@ -236,7 +236,7 @@ int main(int argc, char* argv[])
         }
       }
 
-      o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_DISTANCE);
+      o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_VALUE);
       o->detectObstacles();
       std::vector<Subimage> found;
       found = m.getFoundObstacles();
