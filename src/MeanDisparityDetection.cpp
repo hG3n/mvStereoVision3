@@ -87,6 +87,7 @@ void MeanDisparityDetection::init(cv::Mat const& reference, cv::Mat const& Q, fl
       int br_x = c * distanceX + distanceX;
       int br_y = r * distanceY + distanceY;
       mSubimageVec.push_back(Subimage(cv::Point(tl_x,tl_y), cv::Point(br_x, br_y)));
+      mFoundObstacles.push_back(Subimage(cv::Point(tl_x,tl_y), cv::Point(br_x, br_y)));
     }
   }
 

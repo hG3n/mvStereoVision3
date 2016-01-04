@@ -38,6 +38,8 @@ void SamplepointDetection::init(cv::Mat const& reference, cv::Mat const& Q, floa
   for (int c = 1; c < distanceX; ++c) {
     for (int r = 1; r < distanceY; ++r) { 
       mSPVec.push_back(Samplepoint(cv::Point(c*(reference.cols/distanceX), r*(reference.rows/distanceY)), 2));
+      // add empty samplepoints to found vector to get the layout for the visualization
+      mFoundObstacles.push_back(Samplepoint(cv::Point(c*(reference.cols/distanceX), r*(reference.rows/distanceY)), 2));
     }
   }
 
