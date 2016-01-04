@@ -21,15 +21,13 @@ struct Subimage
 
   ~Subimage() {}
 
-  void calculateSubimageValue(cv::Mat const& dMap)
-  {
+  void calculateSubimageValue(cv::Mat const& dMap) {
     cv::Rect roi(tl,br);
     cv::Mat temp = dMap(roi);
     value = Utility::calcMeanDisparity(temp);
   }
 
-  void draw(cv::Mat & dMap)
-  {
+  void draw(cv::Mat & dMap) {
     cv::rectangle(dMap, tl, br, cv::Scalar(255,0,0));
   }
 

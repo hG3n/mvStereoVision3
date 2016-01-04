@@ -33,8 +33,7 @@ struct Samplepoint
   }
 
   // draws the samplepoint
-  void draw(cv::Mat& dMap)
-  {
+  void draw(cv::Mat& dMap) {
     cv::Point p1(center.x - radius, center.y - radius);
     cv::Point p2(center.x + radius + 1, center.y + radius + 1);
     cv::rectangle(dMap, p1, p2, cv::Scalar(255,0,0));
