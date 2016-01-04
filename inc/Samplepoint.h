@@ -3,6 +3,7 @@
 
 #include "opencv2/core.hpp"
 #include "utility.h"
+#include <typeinfo>
 
 struct Samplepoint
 {
@@ -27,7 +28,6 @@ struct Samplepoint
     {
       cv::Mat temp = dMap(roi);
       value = Utility::calcMeanDisparity(temp);
-      // std::cout << value << std::endl;
     } 
     else
     {
