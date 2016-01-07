@@ -8,14 +8,15 @@
 MeanDisparityDetection::MeanDisparityDetection():
   ObstacleDetection(),
   mTag("MEAN DISPARITY DETECTION\t"),
+  mDMap(),
   mPositions(),
   mMeanMap(),
   mMeanDistanceMap(),
   mQ_32F(),
-  mPointcloud(),
   mDetectionMode(),
   mFoundObstacles(),
-  mObstacleCounter(0)
+  mObstacleCounter(0),
+  mFoundPoints()
 {
   // reserve memory for distance maps
   mMeanDistanceMap.reserve(81);
@@ -91,9 +92,6 @@ void MeanDisparityDetection::init(cv::Mat const& reference, cv::Mat const& Q, fl
     }
   }
 
-  // create empty pointcloud
-  mPointcloud = cv::Mat::zeros(reference.rows, reference.cols, CV_32F);
-
   // initialize disparityRange
   cv::Mat_<float> lower(1,3);
   lower(0) = 0;
@@ -141,11 +139,6 @@ std::vector<Subimage> MeanDisparityDetection::getFoundObstacles() const
   return mFoundObstacles;  
 }
 
-cv::Mat_<float> MeanDisparityDetection::getPointcloud() const 
-{
-  return mPointcloud;
-}
-
 // -----------------------------------------------------------------------------
 // --- setter ------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -160,6 +153,8 @@ void MeanDisparityDetection::setRange(float min_distance, float max_distance)
 // -----------------------------------------------------------------------------
 void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
 {
+  mDMap = dMap;
+
   // create DTO for carrying the disparity values to calcDistance
   dMapValues dMapValues;
   dMapValues.image_x = 0;
@@ -215,16 +210,17 @@ void MeanDisparityDetection::detectObstacles()
    
     for(unsigned int i = 0; i < mMeanDistanceMap.size(); ++i) {
       if(mMeanDistanceMap[i] < mRange.second && mMeanDistanceMap[i] > mRange.first) {
-        std::cout << "Obstacle found in: " << i << std::endl;
+        std::cout << "Obstacle found in: " << mPositions[i] << std::endl;
       }
     }
 
   } else if (mDetectionMode == MODE::MEAN_VALUE) {
-    dMapValues dMapValues;
-    // clear previous points from pointcloud
-    mPointcloud.setTo(0);
-    mFoundObstacles.clear();
 
+    // clear previous points from pointcloud
+    mFoundObstacles.clear();
+    mFoundPoints.clear();
+
+    dMapValues dMapValues;
     for(unsigned int i = 0; i < mMeanMap.size(); ++i) {
       if(mMeanMap[i] < mRangeDisparity.first && mMeanMap[i] > mRangeDisparity.second) {
 
@@ -235,14 +231,24 @@ void MeanDisparityDetection::detectObstacles()
         // fill dmap value dto with needed information to calculate the distance
         dMapValues.image_x = temp_s.roi_center.x;
         dMapValues.image_y = temp_s.roi_center.y;
-        dMapValues.dValue = temp_s.value;
+        dMapValues.dValue = mMeanMap[i];
 
-        // TODO write pointcloud to arbitrary vector
-        mPointcloud.at<float>(temp_s.roi_center.y, temp_s.roi_center.x) = 
-          Utility::calcDistance(dMapValues, mQ_32F, 1);
+        // create pointcloud vertices containing image coords and distance as z values
+        cv::Mat coordinate = Utility::calcCoordinate(dMapValues, mQ_32F);
+        mFoundPoints.push_back(coordinate);
       }
     }
-    cv::imwrite("pcl/pcl_" + std::to_string(mObstacleCounter) + "_" + std::to_string(clock()) + ".png", mPointcloud);
+    // save pointcloud for each frame where an obstacle was found
+    ply p("Hagen Hiller", "obstacle pointcloud", mDMap);
+    std::string prefix = "";
+    if(mObstacleCounter < 10) {
+      prefix +="000";
+    } else if ((mObstacleCounter >=10) && (mObstacleCounter <100)) {
+      prefix += "00";
+    } else if(mObstacleCounter >= 100) {
+      prefix +="0";
+    }
+    p.write("pcl/subimage_detection/pcl_" + prefix + std::to_string(mObstacleCounter) + ".ply", mFoundPoints, ply::MODE::WITH_COLOR);
     ++mObstacleCounter;
   }
 }
