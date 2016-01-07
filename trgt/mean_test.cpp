@@ -44,7 +44,6 @@ cv::Mat dMapWork(480, 752, CV_32F);
 
 cv::Mat Q, Q_32F;
 cv::Mat R, R_32F;
-cv::Mat disparityMap_32FC1;
 
 int exposure = 10000;
 float gain = 4.0;
@@ -59,7 +58,6 @@ void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
     std::unique_lock<std::mutex> ul(disparityLock);
     cond_var.wait(ul);
     Disparity::sgbm(s, dMapRaw, disparity);
-    dMapRaw.convertTo(disparityMap_32FC1,CV_32FC1);
     newDisparityMap = true;
   }
 }
@@ -321,12 +319,14 @@ int main(int argc, char* argv[])
           }
           break;
         case 'd':
-          o->detectObstacles();
-          std::cout << " " << std::endl;
+          Utility::dmap2pcl("pointcloud.ply", dMapRaw, Q_32F);
           break;
         case 'v':
             ++view;
             break;
+        case 'p':
+          std::cout << Q_32F << std::endl;
+          break;
         default:
           std::cout << "Key pressed has no action" << std::endl;
           break;

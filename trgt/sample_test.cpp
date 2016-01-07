@@ -187,6 +187,7 @@ int main(int argc, char* argv[])
   ObstacleDetection *o;
   SamplepointDetection sd;
   sd.init(dMapWork, Q_32F, 0.1, 1.0);
+  std::vector<Samplepoint> layout_container = sd.getFoundObstacles();
   o = &sd;
 
   running = true;
@@ -236,6 +237,7 @@ int main(int argc, char* argv[])
         }
       }
 
+      // obstacle detection
       o->build(dMapWork, binning, 0);
       o->detectObstacles();
       std::vector<Samplepoint> found;
@@ -245,9 +247,12 @@ int main(int argc, char* argv[])
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
       cv::cvtColor(dMapNorm,dMapNorm,CV_GRAY2BGR);
 
+      // visualization
       if (view % 3 == 0) {
-        View::drawSubimageGrid(dMapNorm, binning);
-        View::drawObstacleGrid(dMapNorm, binning);
+        // TODO fix that!!!
+        // std::for_each(layout_container.begin(), layout_container.end(), [&dMapNorm, layout_container] (Samplepoint s) {
+        //   cv::rectangle(dMapNorm, s.roi.tl, s.roi.br, cv::Scalar(0,0,255));
+        // });
       } else {
         drawFoundObstacles(dMapNorm, found);
       }
@@ -321,8 +326,11 @@ int main(int argc, char* argv[])
           }
           break;
         case 'd':
-          o->detectObstacles();
+          Utility::dmap2pcl("pointcloud.ply", dMapRaw, Q_32F);
           std::cout << " " << std::endl;
+          break;
+        case 'p':
+          std::cout << Q_32F << std::endl;
           break;
         case 'v':
             ++view;
