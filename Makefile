@@ -34,16 +34,16 @@ OPENCV = `pkg-config opencv --libs`
 
 LIBS = -lmvDeviceManager -lpthread $(OPENCV)
 
-sample_test: directories $(OBJ)
-	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/sample_test.cpp -o $(TARGETOBJDIR)/sample_test.o
-	@echo Compiled sample_test.cpp successfully!
-	@$(CC) $(OBJ) $(TARGETOBJDIR)/sample_test.o -o $(BINDIR)/sample_test $(LIB_PATH) $(LIBS)
-	@echo Linking complete!
-
 mean_test: directories $(OBJ)
 	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/mean_test.cpp -o $(TARGETOBJDIR)/mean_test.o
 	@echo Compiled mean_test.cpp successfully!
 	@$(CC) $(OBJ) $(TARGETOBJDIR)/mean_test.o -o $(BINDIR)/mean_test $(LIB_PATH) $(LIBS)
+	@echo Linking complete!
+
+sample_test: directories $(OBJ)
+	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/sample_test.cpp -o $(TARGETOBJDIR)/sample_test.o
+	@echo Compiled sample_test.cpp successfully!
+	@$(CC) $(OBJ) $(TARGETOBJDIR)/sample_test.o -o $(BINDIR)/sample_test $(LIB_PATH) $(LIBS)
 	@echo Linking complete!
 
 ccDisparity: directories $(OBJ)
@@ -150,7 +150,8 @@ $(OBJ): $(OBJDIR)/%.o :$(SRCDIR)/%.cpp
 
 clean:
 	$(RM) $(OBJDIR) $(BINDIR) $(TARGETOBJDIR)
-	$(RM) pcl/*
+	$(RM) pcl/samplepoint_detection/*
+	$(RM) pcl/subimage_detection/*
 
 #To compile mvIMPACTacquire SDK with c++11 find the file:
 #/opt/mvIMPACT_acquire/mvPropHandling/include/mvPropHandlingDatatypes.h
