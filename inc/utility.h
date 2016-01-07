@@ -26,6 +26,7 @@
 #include "easylogging++.h"
 
 #include "Camera.h"
+#include "ply.h"
 
 struct Stereopair
 {
@@ -61,26 +62,26 @@ namespace Utility
 	bool 	createDirectory(std::string const& dirPath);
 
 	// init cameras
-	bool 	initCameras(mvIMPACT::acquire::DeviceManager&,Camera*&,Camera*&);
+	bool 	initCameras(mvIMPACT::acquire::DeviceManager&, Camera*&, Camera*&);
 
 	// config
-	bool 	checkConfig(std::string const&,std::vector<std::string> const&, cv::FileStorage &);
+	bool 	checkConfig(std::string const&, std::vector<std::string> const&, cv::FileStorage &);
 
 	// helper
 	double 	checkSharpness(cv::Mat const&);
 
-  cv::Mat calcCoordinate(cv::Mat const&, cv::Mat const&,int,int);
-  cv::Mat calcCoordinate(cv::Mat const&, float ,int,int);
-	float calcDistance(dMapValues, cv::Mat const&, int);
-  dMapValues calcDMapValues(cv::Mat_<float> const&, cv::Mat const&);
+  cv::Mat     calcCoordinate(dMapValues, cv::Mat const&);
+  float       calcDistance(dMapValues, cv::Mat const&, int);
+  dMapValues  calcDMapValues(cv::Mat_<float> const&, cv::Mat const&);
+  void        dmap2pcl(std::string const&, cv::Mat const&, cv::Mat const&);
 
   float                  calcMeanDisparity(cv::Mat const&);
-  std::pair<float,float> calcMinMaxDisparity(cv::Mat const&);
+  std::pair<short,short> calcMinMaxDisparity(cv::Mat const&);
   float									 calcStdDev(cv::Mat const&);
 
   void subdivideImage(cv::Mat const&, int, std::vector<cv::Mat>&);
 
-  std::string type2str(int);
+  std::string type2str(cv::Mat const&);
 
   float calcMagnitude(cv::Mat const &);
   float calcAngle(cv::Mat&, cv::Mat&);

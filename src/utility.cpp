@@ -173,59 +173,30 @@ double Utility::checkSharpness(cv::Mat const& src)
   return cv::mean(FM).val[0];
 }
 
-cv::Mat Utility::calcCoordinate(cv::Mat const& Q, cv::Mat const& dMap,int x,int y)
+cv::Mat Utility::calcCoordinate(dMapValues dMapValues, cv::Mat const& Q)
 {
-  cv::Mat_<float> coordinate(1,4);
-  float d = dMap.at<float>(x,y);
-  d/=16.0;
-  
-  if(d > 0) {
-    coordinate(0)=x;
-    coordinate(1)=y;
-    coordinate(2)=d;
-    coordinate(3)=1;
-
-    coordinate = cv::Mat(coordinate);
-
-    coordinate = Q * coordinate.t();
-    coordinate /= coordinate(3);
-    
-    return coordinate;
-  } else {
-    coordinate(0) = 0;
-    coordinate(1) = 0;
-    coordinate(2) = 0;
-    coordinate(3) = 0;
-    return coordinate;
-  }
-}
-
-cv::Mat Utility::calcCoordinate(cv::Mat const& Q, float dValue, int x, int y)
-{
-  printf("coordinate calculation called!\n");
+  float d = dMapValues.dValue / 16;
 
   cv::Mat_<float> coordinate(1,4);
-  dValue /= 16.0;
-  
-  if(dValue > 0) {
-    coordinate(0)=x;
-    coordinate(1)=y;
-    coordinate(2)=dValue;
-    coordinate(3)=1;
 
-    coordinate = cv::Mat(coordinate);
+  coordinate(0)=dMapValues.image_x;
+  coordinate(1)=dMapValues.image_y;
+  coordinate(2)=d;
+  coordinate(3)=1;
 
-    coordinate = Q * coordinate.t();
-    coordinate /= coordinate(3);
-    return coordinate;
-  
-  } else {
-    coordinate(0) = 0;
-    coordinate(1) = 0;
+  coordinate = (Q)*coordinate.t();
+  coordinate/=coordinate(3);
+
+  float distance = coordinate(2)/1000;
+
+  if(cvIsInf(distance))
+  {
     coordinate(2) = 0;
-    coordinate(3) = 0;
+    return coordinate;    
+  } else {
     return coordinate;
   }
+
 }
 
 float Utility::calcDistance(dMapValues dMapValues, cv::Mat const& Q, int binning)
@@ -238,32 +209,16 @@ float Utility::calcDistance(dMapValues dMapValues, cv::Mat const& Q, int binning
   coordinateQ(2)=d;
   coordinateQ(3)=1;
 
-  // if(binning == 0)
-  // {
-    coordinateQ = (Q)*coordinateQ.t();
-    coordinateQ/=coordinateQ(3);
-  
-    float distance = coordinateQ(2)/1000;
-    coordinateQ.release();
+  coordinateQ = (Q)*coordinateQ.t();
+  coordinateQ/=coordinateQ(3);
 
+  float distance = coordinateQ(2)/1000;
+  coordinateQ.release();
+
+  if(cvIsInf(distance))
+    return 0;
+  else
     return distance;
-  // }
-  // else
-  // {
-  //   coordinateQ = (Q/2)*coordinateQ.t();
-  //   coordinateQ/=coordinateQ(3);
-    
-  //   float distance = coordinateQ(2)/1000;
-  //   coordinateQ.release();
-
-  //   // because binning is half of the image
-  //   if(cvIsInf(distance))
-  //   {
-  //     return distance;
-  //   }
-  //   else
-  //     return distance/2;
-  // }
 }
 
 dMapValues Utility::calcDMapValues(cv::Mat_<float> const& c, cv::Mat const& Q)
@@ -284,6 +239,28 @@ dMapValues Utility::calcDMapValues(cv::Mat_<float> const& c, cv::Mat const& Q)
   return toReturn;
 }
 
+void Utility::dmap2pcl(std::string const& filename, cv::Mat const& dMap, cv::Mat const& Q)
+{
+  dMapValues dMapValues;
+  std::vector<cv::Mat> storage;
+  ply p("Hagen Hiller", "disparity pointcloud", dMap);
+
+  for( int r = 0; r < dMap.rows; ++r) {
+    for(int c = 0; c < dMap.cols; ++c) {
+      float value = dMap.at<short>(r,c);
+      if(value > 0){
+        dMapValues.image_x = c;
+        dMapValues.image_y = r;
+        dMapValues.dValue = value;
+
+        cv::Mat coordinate = Utility::calcCoordinate(dMapValues, Q);
+        storage.push_back(coordinate);   
+      }
+    }
+  }
+  p.write(filename, storage, ply::MODE::WITH_COLOR);
+}
+
 
 float Utility::calcMeanDisparity(cv::Mat const& matrix)
 {
@@ -301,30 +278,28 @@ float Utility::calcMeanDisparity(cv::Mat const& matrix)
   // return disparity of 1.0 to indicate infinity
   if(total == 0 || numElements == 0){
     return 0.0;
-  }
-  else
-  {
+  } else {
     float mean = total / abs(numElements);
     return mean;
   }
 }
 
-std::pair<float,float> Utility::calcMinMaxDisparity(cv::Mat const& matrix)
+std::pair<short,short> Utility::calcMinMaxDisparity(cv::Mat const& matrix)
 {
-  std::vector<float> elements;
-  for(int r = 0; r < matrix.rows; ++r)
-  {
-    for(int c = 0; c < matrix.cols; ++c)
-    {
-      if(static_cast<float>(matrix.at<short>(r,c)) > 0)
-      {
-        float current = static_cast<float>(matrix.at<short>(r,c));
-        elements.push_back(current);
+
+  std::vector<short> elements;
+  for (int r = 0; r < matrix.rows; ++r) {
+    for (int c = 0; c < matrix.cols; ++c) {
+      short value = matrix.at<short>(r,c);
+      if(value > 0){
+        elements.push_back(value);
       }
     }
-  } 
+  }
+  
   auto min = std::min_element(std::begin(elements), std::end(elements));
   auto max = std::max_element(std::begin(elements), std::end(elements));
+
   return std::make_pair(*min,*max);
 }
 
@@ -414,11 +389,13 @@ void Utility::subdivideImage(cv::Mat const& subimage, int binning, std::vector<c
   tmpMat.release();
 }
 
-std::string Utility::type2str(int type) {
+
+
+std::string type2str(cv::Mat const& input) {
   std::string r;
 
-  uchar depth = type & CV_MAT_DEPTH_MASK;
-  uchar chans = 1 + (type >> CV_CN_SHIFT);
+  uchar depth = input.type() & CV_MAT_DEPTH_MASK;
+  uchar chans = 1 + (input.type() >> CV_CN_SHIFT);
 
   switch ( depth ) {
     case CV_8U:  r = "8U"; break;
