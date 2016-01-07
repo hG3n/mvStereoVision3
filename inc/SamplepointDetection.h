@@ -44,13 +44,15 @@ class SamplepointDetection: public ObstacleDetection
 
   private:
     std::string              mTag;
+    cv::Mat                  mDMap;
     std::vector<Samplepoint> mSPVec;
     std::vector<float>       mDistanceVec;
     cv::Mat_<float>          mCenterVec;
     cv::Point                mImageCenter;
     cv::Mat                  mQ_32F;
-    cv::Mat_<float>          mPointcloud;
     std::vector<Samplepoint> mFoundObstacles;
+    int                      mObstacleCounter;
+    std::vector<cv::Mat>     mFoundPoints;
 };
 
 #endif

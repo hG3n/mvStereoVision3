@@ -8,13 +8,15 @@
 SamplepointDetection::SamplepointDetection():
   ObstacleDetection(),
   mTag("SAMPLEPOINT DETECTION\t"),
+  mDMap(),
   mSPVec(),
   mDistanceVec(),
   mCenterVec(),
   mImageCenter(),
   mQ_32F(),
-  mPointcloud(),
-  mFoundObstacles()
+  mFoundObstacles(),
+  mObstacleCounter(0),
+  mFoundPoints()
 {}
 
 SamplepointDetection::~SamplepointDetection()
@@ -54,9 +56,6 @@ void SamplepointDetection::init(cv::Mat const& reference, cv::Mat const& Q, floa
   mImageCenter.x = mQ_32F.at<float>(0,3);
   mImageCenter.y = mQ_32F.at<float>(1,3);
  
-  // create empty pointcloud
-  mPointcloud = cv::Mat::zeros(reference.rows, reference.cols, CV_32F);
-
   // intialize disparityRange
   cv::Mat_<float> lower(1,3);
   lower(0) = 0;
@@ -97,11 +96,6 @@ std::vector<Samplepoint> SamplepointDetection::getFoundObstacles() const
   return mFoundObstacles;
 }
 
-cv::Mat_<float> SamplepointDetection::getPointcloud() const
-{
-  return mPointcloud;
-}
-
 // -----------------------------------------------------------------------------
 // --- setter ------------------------------------------------------------------
 // -----------------------------------------------------------------------------
@@ -116,6 +110,8 @@ void SamplepointDetection::setRange(float min_distance, float max_distance)
 // -----------------------------------------------------------------------------
 void SamplepointDetection::build(cv::Mat const& dMap, int binning, int mode)
 {
+  mDMap = dMap;
+
   mDistanceVec.clear();
 
   std::for_each(mSPVec.begin(), mSPVec.end(), [this, dMap] (Samplepoint s){
@@ -132,7 +128,6 @@ void SamplepointDetection::build(cv::Mat const& dMap, int binning, int mode)
 void SamplepointDetection::detectObstacles() 
 {
   // clear previous pointcloud
-  mPointcloud.setTo(0);
   mFoundObstacles.clear();
 
   dMapValues dMapValues;
@@ -143,16 +138,29 @@ void SamplepointDetection::detectObstacles()
       // create temporary Samplepoint object and add it to the found obstacles vector
       Samplepoint temp_s = mSPVec[i];
       mFoundObstacles.push_back(temp_s);
-      
+    
       // fill dmap value dto with needed information to calculate the distance
       dMapValues.image_x = temp_s.center.x;
       dMapValues.image_y = temp_s.center.y;
       dMapValues.dValue = mDistanceVec[i];
-      
-      // TODO write pointcloud to arbitrary vector
-      mPointcloud.at<float>(temp_s.center.y, temp_s.center.x) = 
-        Utility::calcDistance(dMapValues,mQ_32F,1);
+
+      // create pointcloud vertices containing image coords and distance as z values
+      cv::Mat coordinate = Utility::calcCoordinate(dMapValues, mQ_32F);
+      mFoundPoints.push_back(coordinate);
+    
     }
+    // save pointcloud for each frame where an obstacle was found
+    ply p("Hagen Hiller", "obstacle pointcloud", mDMap);
+    std::string prefix = "";
+    if(mObstacleCounter < 10) {
+      prefix +="000";
+    } else if ((mObstacleCounter >=10) && (mObstacleCounter <100)) {
+      prefix += "00";
+    } else if(mObstacleCounter >= 100) {
+      prefix +="0";
+    }
+    p.write("pcl/samplepoint_detection/pcl_" + prefix + std::to_string(mObstacleCounter) + ".ply", mFoundPoints, ply::MODE::WITH_COLOR);
+    ++mObstacleCounter;
   }
 
   // TODO: just use points in a specific range
