@@ -3,6 +3,8 @@
 #images
 *.jpg
 *.png
+#pointclouds
+*.ply
 #executable
 bin/
 #logiles
