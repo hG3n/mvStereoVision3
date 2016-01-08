@@ -149,18 +149,21 @@ void SamplepointDetection::detectObstacles()
       mFoundPoints.push_back(coordinate);
     
     }
-    // save pointcloud for each frame where an obstacle was found
-    ply p("Hagen Hiller", "obstacle pointcloud", mDMap);
-    std::string prefix = "";
-    if(mObstacleCounter < 10) {
-      prefix +="000";
-    } else if ((mObstacleCounter >=10) && (mObstacleCounter <100)) {
-      prefix += "00";
-    } else if(mObstacleCounter >= 100) {
-      prefix +="0";
+    // do not save any pointclouds if there are no found obstacles
+    if(mFoundPoints.size() != 0) {
+      // save pointcloud for each frame where an obstacle was found
+      ply p("Hagen Hiller", "obstacle pointcloud", mDMap);
+      std::string prefix = "";
+      if(mObstacleCounter < 10) {
+        prefix +="000";
+      } else if ((mObstacleCounter >=10) && (mObstacleCounter <100)) {
+        prefix += "00";
+      } else if(mObstacleCounter >= 100) {
+        prefix +="0";
+      }
+      p.write("pcl/samplepoint_detection/pcl_" + prefix + std::to_string(mObstacleCounter) + ".ply", mFoundPoints, ply::MODE::WITH_COLOR);
+      ++mObstacleCounter;      
     }
-    p.write("pcl/samplepoint_detection/pcl_" + prefix + std::to_string(mObstacleCounter) + ".ply", mFoundPoints, ply::MODE::WITH_COLOR);
-    ++mObstacleCounter;
   }
 
   // TODO: just use points in a specific range
