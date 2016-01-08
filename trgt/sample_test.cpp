@@ -254,7 +254,7 @@ int main(int argc, char* argv[])
         //   cv::rectangle(dMapNorm, s.roi.tl, s.roi.br, cv::Scalar(0,0,255));
         // });
       } else {
-        drawFoundObstacles(dMapNorm, found);
+        // drawFoundObstacles(dMapNorm, found);
       }
 
       cv::imshow("SGBM",dMapNorm);
