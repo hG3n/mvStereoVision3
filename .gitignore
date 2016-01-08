@@ -26,3 +26,5 @@ dMap.yml
 pcl/
 #ignore any kind of archive files
 *.zip
+#test folder
+test/
