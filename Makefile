@@ -152,6 +152,7 @@ clean:
 	$(RM) $(OBJDIR) $(BINDIR) $(TARGETOBJDIR)
 	$(RM) pcl/samplepoint_detection/*
 	$(RM) pcl/subimage_detection/*
+	$(RM) test/*
 
 #To compile mvIMPACTacquire SDK with c++11 find the file:
 #/opt/mvIMPACT_acquire/mvPropHandling/include/mvPropHandlingDatatypes.h
