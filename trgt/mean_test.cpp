@@ -1,10 +1,16 @@
 #include <iostream>
 #include <string>
 #include <chrono>
+#include <ctime>
+#include <fstream>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 //system command
 #include <cstdlib>
 
+// user includes
 #include "Stereosystem.h"
 #include "disparity.h"
 #include "easylogging++.h"
@@ -14,12 +20,6 @@
 #include "MeanDisparityDetection.h"
 
 #include "Subimage.h"
-
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-
-#include <ctime>
 
 INITIALIZE_EASYLOGGINGPP
 std::string tag = " Main ";
@@ -41,6 +41,7 @@ int view;
 cv::Mat dMapRaw;
 cv::Mat dMapNorm;
 cv::Mat dMapWork(480, 752, CV_32F);
+std::vector<Subimage> found;
 
 cv::Mat Q, Q_32F;
 cv::Mat R, R_32F;
@@ -49,7 +50,13 @@ int exposure = 10000;
 float gain = 4.0;
 bool hdr = false;
 
+ObstacleDetection *o;
+MeanDisparityDetection m;
 bool detectionIsInit = true;
+
+int test_nr = 0;
+std::string test_name;
+std::ofstream test_general;
 
 void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
 {
@@ -104,6 +111,59 @@ void drawFoundObstacles(cv::Mat& reference, std::vector<Subimage> const& obstacl
   std::for_each(obstacle_vec.begin(), obstacle_vec.end(), [&reference] (Subimage s){
     cv::rectangle(reference, s.tl, s.br, cv::Scalar(0,0,255), -1);
   });
+}
+
+bool save_test_set(std::vector<Subimage> const& found_obstacles, Stereopair const& s, int binning)
+{
+  std::cout << "saving test set nr: " << test_nr << std::endl;
+
+  std::string directory = "test/"+test_name+"/";
+  if(!(Utility::createDirectory(directory))) {
+    LOG(INFO) << "failed to create test directory!" << std::endl;
+    return false;
+  }
+
+  // save full pointcloud
+  std::cout << "saving full pointcloud" << std::endl;
+  Utility::dmap2pcl(directory+ "test_pcl_" + std::to_string(test_nr)+".ply", dMapWork, Q_32F);
+
+  // save images
+  cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_left.jpg",s.mLeft);
+  cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_right.jpg",s.mRight);
+  cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_disparity.jpg",dMapWork);
+
+  // save disparity matrix
+  cv::FileStorage fs(directory+"_test_"+std::to_string(test_nr)+"_dmaps.yml",cv::FileStorage::WRITE);
+  fs << "dMapRaw" << dMapRaw;
+  fs << "dMapWork" << dMapWork;
+  fs.release();
+
+  // save general infos to csv
+  int real_world_distance, supposed_to_find;
+  std::cout << "testing distance:           ";
+  std::cin >> real_world_distance;
+  std::cout << "" << std::endl;
+  std::cout << "supposed to find obstacles: ";
+  std::cin >> supposed_to_find;
+  std::cout << "" << std::endl;
+
+  test_general << test_nr << "," << real_world_distance << "," << found_obstacles.size() << "," << supposed_to_find << "\n";
+
+  o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_VALUE);
+  o->detectObstacles();
+
+  // save found obstacles to csv
+  std::ofstream out;
+  out.open(directory+test_name+"_test_"+ std::to_string(test_nr) + "_found_obstacles.csv");
+  out << "tl_x,tl_y,br_x,br_y,roi_center_x, roi_center_y,value\n";
+  std::for_each(found_obstacles.begin(), found_obstacles.end(), [&out] (Subimage s) {
+    out << s.tl.x << "," << s.tl.y << ","
+        << s.br.x << "," << s.br.y << ","
+        << s.roi_center.x << "," << s.roi_center.y << ","
+        << s.value << "\n";
+  });
+
+  ++test_nr;
 }
 
 int main(int argc, char* argv[])
@@ -182,10 +242,16 @@ int main(int argc, char* argv[])
   createDMapROIS(dMapWork, dMapROI_u, dMapROI_b, 0);
 
   // create subimage container to save created subdivisions
-  ObstacleDetection *o;
-  MeanDisparityDetection m;
   m.init(dMapWork, Q_32F, 0.6, 1.0);
   o = &m;
+
+  std::cout << "test_name: ";
+  std::cin >> test_name;
+  std::cout << "" << std::endl;
+
+  // init general test csv
+  test_general.open("test/"+test_name+"/"+"test_"+std::to_string(test_nr)+"_general.csv");
+  test_general << "testnr,testing_distance,num_found,supposed_to_find\n";
 
   running = true;
   int frame = 0;
@@ -234,9 +300,8 @@ int main(int argc, char* argv[])
         }
       }
 
-      o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_VALUE);
-      o->detectObstacles();
-      std::vector<Subimage> found;
+      // o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_VALUE);
+      // o->detectObstacles();
       found = m.getFoundObstacles();
 
       // display stuff
@@ -326,6 +391,11 @@ int main(int argc, char* argv[])
             break;
         case 'p':
           std::cout << Q_32F << std::endl;
+          break;
+        case 't':
+          if(!(save_test_set(found,s, binning))) {
+            continue;
+          }
           break;
         default:
           std::cout << "Key pressed has no action" << std::endl;
