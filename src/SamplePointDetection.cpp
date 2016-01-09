@@ -114,12 +114,12 @@ void SamplepointDetection::build(cv::Mat const& dMap, int binning, int mode)
 
   mDistanceVec.clear();
 
-  std::for_each(mSPVec.begin(), mSPVec.end(), [this, dMap] (Samplepoint s){
+  for (unsigned int i = 0; i < mSPVec.size(); ++i) {
     // calculate mean disparity value for each sample point
-    s.calculateSamplepointValue(dMap);
+    mSPVec[i].calculateSamplepointValue(dMap);
     // fill mean map with median disparity values
-    mDistanceVec.push_back(s.value);
-  });
+    mDistanceVec.push_back(mSPVec[i].value);
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -137,6 +137,7 @@ void SamplepointDetection::detectObstacles()
      
       // create temporary Samplepoint object and add it to the found obstacles vector
       Samplepoint temp_s = mSPVec[i];
+      temp_s.value = mDistanceVec[i];
       mFoundObstacles.push_back(temp_s);
     
       // fill dmap value dto with needed information to calculate the distance
@@ -206,7 +207,6 @@ void SamplepointDetection::detectObstacles()
     calculate angle between lowest 2 and center vector
     return minimal angles (x and z) and distance of nearest 2 obstacles
   */
-
 
   // float angle = Utility::calcAngle(mCenterVec,temp);
   // std::cout << angle << std::endl;
