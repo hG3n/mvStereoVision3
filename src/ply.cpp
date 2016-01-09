@@ -6,9 +6,7 @@ ply::ply():
   mObjectName(),
   mPcl(),
   mDMap()
-{
-  LOG(INFO) << mTag << "initialized" << std::endl;
-}
+{}
 
 ply::ply(std::string const& author, std::string const& object_name):
   mTag("PLY WRITER\t"),
@@ -16,9 +14,7 @@ ply::ply(std::string const& author, std::string const& object_name):
   mObjectName(object_name),
   mPcl(),
   mDMap()
-{
-  LOG(INFO) << mTag << "initialized" << std::endl;
-}
+{}
 
 ply::ply(std::string const& author, std::string const& object_name, cv::Mat const& disparity_map):
   mTag("PLY WRITER\t"),
@@ -26,14 +22,10 @@ ply::ply(std::string const& author, std::string const& object_name, cv::Mat cons
   mObjectName(object_name),
   mPcl(),
   mDMap(disparity_map)
-{
-  LOG(INFO) << mTag << "initialized" << std::endl;
-}
+{}
 
 ply::~ply()
-{
-  LOG(INFO) << mTag << "destroyed!" << std::endl;
-}
+{}
 
 // -----------------------------------------------------------------------------
 // --- methods -----------------------------------------------------------------
@@ -43,9 +35,6 @@ void ply::init()
 
 bool ply::write(std::string const& filename, std::vector<cv::Mat> const& to_write, int mode)
 {
-  std::cout << mDMap.rows << std::endl;
-  std::cout << mDMap.cols << std::endl;
-
   switch(mode){
     case MODE::PLAIN:
     {
@@ -59,7 +48,7 @@ bool ply::write(std::string const& filename, std::vector<cv::Mat> const& to_writ
       mPcl << "property float x\nproperty float y\nproperty float z\nend_header\n";
 
       // write vertex list
-      for (int i = 0; i < to_write.size(); ++i) {
+      for (unsigned int i = 0; i < to_write.size(); ++i) {
         cv::Mat_<float> temp = to_write[i];
         mPcl << temp(0) << " " 
              << temp(1) << " "
@@ -76,7 +65,6 @@ bool ply::write(std::string const& filename, std::vector<cv::Mat> const& to_writ
       // create filestream
       mPcl.open(filename);
 
-      std::cout << "with color called" << std::endl;
       // get min max range of 
       auto minmax = Utility::calcMinMaxDisparity(mDMap);
 
@@ -93,7 +81,7 @@ bool ply::write(std::string const& filename, std::vector<cv::Mat> const& to_writ
       mPcl << "end_header\n";
 
       // write vertex list
-      for (int i = 0; i < to_write.size(); ++i) {
+      for (unsigned int i = 0; i < to_write.size(); ++i) {
         cv::Mat_<float> temp = to_write[i];       
         mPcl << temp(0) << " " 
              << temp(1) << " "
@@ -132,7 +120,7 @@ bool ply::write(std::string const& filename, std::vector<cv::Mat> const& to_writ
       mPcl << "end_header\n";
 
       // write vertex list
-      for (int i = 0; i < to_write.size(); ++i) {
+      for (unsigned int i = 0; i < to_write.size(); ++i) {
         cv::Mat_<float> temp = to_write[i];
         mPcl << temp(0) << " " 
              << temp(1) << " "
