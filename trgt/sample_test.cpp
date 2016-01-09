@@ -1,10 +1,16 @@
 #include <iostream>
 #include <string>
 #include <chrono>
+#include <ctime>
+#include <fstream>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 //system command
 #include <cstdlib>
 
+// user includes
 #include "Stereosystem.h"
 #include "disparity.h"
 #include "easylogging++.h"
@@ -14,12 +20,6 @@
 #include "SamplepointDetection.h"
 
 #include "Samplepoint.h"
-
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-
-#include <ctime>
 
 INITIALIZE_EASYLOGGINGPP
 std::string tag = " Main ";
@@ -41,16 +41,22 @@ int view;
 cv::Mat dMapRaw;
 cv::Mat dMapNorm;
 cv::Mat dMapWork(480, 752, CV_32F);
+std::vector<Samplepoint> found;
 
 cv::Mat Q, Q_32F;
 cv::Mat R, R_32F;
-cv::Mat disparityMap_32FC1;
 
 int exposure = 10000;
 float gain = 4.0;
 bool hdr = false;
 
+ObstacleDetection *o;
+SamplepointDetection sd;
 bool detectionIsInit = true;
+
+int test_nr = 0;
+std::string test_name;
+std::ofstream test_general;
 
 void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
 {
@@ -59,7 +65,6 @@ void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
     std::unique_lock<std::mutex> ul(disparityLock);
     cond_var.wait(ul);
     Disparity::sgbm(s, dMapRaw, disparity);
-    dMapRaw.convertTo(disparityMap_32FC1,CV_32FC1);
     newDisparityMap = true;
   }
 }
@@ -106,6 +111,64 @@ void drawFoundObstacles(cv::Mat& reference, std::vector<Samplepoint> const& obst
   std::for_each(obstacle_vec.begin(), obstacle_vec.end(), [&reference] (Samplepoint s){
     cv::circle(reference, s.center, 3, cv::Scalar(0,0,255), -1);
   });
+}
+
+bool save_test_set(std::vector<Samplepoint> const& found_obstacles, Stereopair const& s, int binning)
+{
+  std::cout << "saving test set nr: " << test_nr << std::endl;
+
+  std::string directory = "test/"+test_name+"/";
+  if(!(Utility::createDirectory(directory))) {
+    LOG(INFO) << "failed to create test directory!" << std::endl;
+    return false;
+  }
+
+  // save full pointcloud
+  std::cout << "saving full pointcloud" << std::endl;
+  Utility::dmap2pcl(directory+ "test_pcl_" + std::to_string(test_nr)+".ply", dMapWork, Q_32F);
+
+  // save images
+  cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_left.jpg",s.mLeft);
+  cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_right.jpg",s.mRight);
+  cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_disparity.jpg",dMapWork);
+
+  // save disparity matrix
+  cv::FileStorage fs(directory+"_test_"+std::to_string(test_nr)+"_dmaps.yml",cv::FileStorage::WRITE);
+  fs << "dMapRaw" << dMapRaw;
+  fs << "dMapWork" << dMapWork;
+  fs.release();
+
+  // call obstacle detection and get newest found vector
+  o->build(dMapWork, binning,0);
+  o->detectObstacles();
+  found = sd.getFoundObstacles();
+
+  // save found obstacles to csv
+  std::ofstream out;
+  out.open(directory+test_name+"_test_"+ std::to_string(test_nr) + "_found_obstacles.csv");
+  out << "center_x,center_y,radius,roi_tl_x,roi_tl.y,roi_br_x,roi_br_y,value\n";
+  std::for_each(found_obstacles.begin(), found_obstacles.end(), [&out] (Samplepoint s) {
+    out << s.center.x << "," << s.center.y << ","
+        << s.radius << ","
+        // << s.roi.tl << "," << s.roi.tl << ","
+        // << s.roi.br << "," << s.roi.br << ","
+        << s.value << "\n";
+  });
+
+  // save general infos to csv
+  int real_world_distance, supposed_to_find;
+  std::cout << "testing distance:           ";
+  std::cin >> real_world_distance;
+  std::cout << "" << std::endl;
+  std::cout << "supposed to find obstacles: ";
+  std::cin >> supposed_to_find;
+  std::cout << "" << std::endl;
+
+  test_general << test_nr << "," << real_world_distance << "," << found_obstacles.size() << "," << supposed_to_find << "\n";
+
+
+  ++test_nr;
+return true;
 }
 
 int main(int argc, char* argv[])
@@ -184,11 +247,17 @@ int main(int argc, char* argv[])
   createDMapROIS(dMapWork, dMapROI_u, dMapROI_b, 0);
 
   // create subimage container to save created subdivisions
-  ObstacleDetection *o;
-  SamplepointDetection sd;
   sd.init(dMapWork, Q_32F, 0.1, 1.0);
   std::vector<Samplepoint> layout_container = sd.getFoundObstacles();
   o = &sd;
+
+  std::cout << "test_name: ";
+  std::cin >> test_name;
+  std::cout << "" << std::endl;
+
+  // init general test csv
+  test_general.open("test/"+test_name+"/"+"test_"+std::to_string(test_nr)+"_general.csv");
+  test_general << "testnr,testing_distance,num_found,supposed_to_find\n";
 
   running = true;
   int frame = 0;
@@ -238,10 +307,9 @@ int main(int argc, char* argv[])
       }
 
       // obstacle detection
-      o->build(dMapWork, binning, 0);
-      o->detectObstacles();
-      std::vector<Samplepoint> found;
-      found = sd.getFoundObstacles();
+      // o->build(dMapWork, binning, 0);
+      // o->detectObstacles();
+      // found = sd.getFoundObstacles();
 
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
@@ -254,7 +322,7 @@ int main(int argc, char* argv[])
         //   cv::rectangle(dMapNorm, s.roi.tl, s.roi.br, cv::Scalar(0,0,255));
         // });
       } else {
-        // drawFoundObstacles(dMapNorm, found);
+        drawFoundObstacles(dMapNorm, found);
       }
 
       cv::imshow("SGBM",dMapNorm);
@@ -331,6 +399,10 @@ int main(int argc, char* argv[])
           break;
         case 'p':
           std::cout << Q_32F << std::endl;
+          break;
+        case 't':
+          if(!(save_test_set(found, s, binning)))
+            continue;
           break;
         case 'v':
             ++view;
