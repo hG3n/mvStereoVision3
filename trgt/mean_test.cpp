@@ -138,19 +138,10 @@ bool save_test_set(std::vector<Subimage> const& found_obstacles, Stereopair cons
   fs << "dMapWork" << dMapWork;
   fs.release();
 
-  // save general infos to csv
-  int real_world_distance, supposed_to_find;
-  std::cout << "testing distance:           ";
-  std::cin >> real_world_distance;
-  std::cout << "" << std::endl;
-  std::cout << "supposed to find obstacles: ";
-  std::cin >> supposed_to_find;
-  std::cout << "" << std::endl;
-
-  test_general << test_nr << "," << real_world_distance << "," << found_obstacles.size() << "," << supposed_to_find << "\n";
-
+  // call obstacle detection and get newest found vector
   o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_VALUE);
   o->detectObstacles();
+  found = sd.getFoundObstacles();
 
   // save found obstacles to csv
   std::ofstream out;
@@ -163,7 +154,19 @@ bool save_test_set(std::vector<Subimage> const& found_obstacles, Stereopair cons
         << s.value << "\n";
   });
 
+  // save general infos to csv
+  int real_world_distance, supposed_to_find;
+  std::cout << "testing distance:           ";
+  std::cin >> real_world_distance;
+  std::cout << "" << std::endl;
+  std::cout << "supposed to find obstacles: ";
+  std::cin >> supposed_to_find;
+  std::cout << "" << std::endl;
+
+  test_general << test_nr << "," << real_world_distance << "," << found_obstacles.size() << "," << supposed_to_find << "\n";
+
   ++test_nr;
+  return true;
 }
 
 int main(int argc, char* argv[])
@@ -393,9 +396,8 @@ int main(int argc, char* argv[])
           std::cout << Q_32F << std::endl;
           break;
         case 't':
-          if(!(save_test_set(found,s, binning))) {
+          if(!(save_test_set(found,s, binning)))
             continue;
-          }
           break;
         default:
           std::cout << "Key pressed has no action" << std::endl;
