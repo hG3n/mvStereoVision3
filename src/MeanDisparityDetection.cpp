@@ -139,6 +139,11 @@ std::vector<Subimage> MeanDisparityDetection::getFoundObstacles() const
   return mFoundObstacles;  
 }
 
+int MeanDisparityDetection::getObstacleCounter() const
+{
+  return mObstacleCounter;
+}
+
 // -----------------------------------------------------------------------------
 // --- setter ------------------------------------------------------------------
 // -----------------------------------------------------------------------------
