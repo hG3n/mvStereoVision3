@@ -143,7 +143,6 @@ directories:
 	${MKDIR_P} ${BINDIR}
 	${MKDIR_P} ${TARGETOBJDIR}
 
-
 $(OBJ): $(OBJDIR)/%.o :$(SRCDIR)/%.cpp
 	@$(CC) $(CFLAGS) $(INC_PATH) $< -o $@
 	@echo Compiled $< $ successfully!
@@ -160,5 +159,11 @@ clean:
 #   elif defined(linux)
 #to
 #    elif defined(__linux__)
+
+# To run the programs without sudo rights you have to chmod the usb ports
+# run the program without sudo rights and checkout which ports are being used
+# chmod using the following scheme:
+# $> sudo chmod o+w /dev/bus/usb/00X/0XX
+# for each port a camera is connected to
 
 
