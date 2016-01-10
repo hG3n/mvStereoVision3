@@ -56,7 +56,6 @@ bool detectionIsInit = true;
 
 int test_nr = 0;
 std::string test_name;
-std::ofstream test_general;
 
 void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
 {
@@ -130,7 +129,7 @@ bool save_test_set(std::vector<Subimage> const& found_obstacles, Stereopair cons
   // save images
   cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_left.jpg",s.mLeft);
   cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_right.jpg",s.mRight);
-  cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_disparity.jpg",dMapWork);
+  cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_disparity.jpg",dMapNorm);
 
   // save disparity matrix
   cv::FileStorage fs(directory+"_test_"+std::to_string(test_nr)+"_dmaps.yml",cv::FileStorage::WRITE);
@@ -141,7 +140,7 @@ bool save_test_set(std::vector<Subimage> const& found_obstacles, Stereopair cons
   // call obstacle detection and get newest found vector
   o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_VALUE);
   o->detectObstacles();
-  found = sd.getFoundObstacles();
+  found = m.getFoundObstacles();
 
   // save found obstacles to csv
   std::ofstream out;
@@ -159,11 +158,12 @@ bool save_test_set(std::vector<Subimage> const& found_obstacles, Stereopair cons
   std::cout << "testing distance:           ";
   std::cin >> real_world_distance;
   std::cout << "" << std::endl;
-  std::cout << "supposed to find obstacles: ";
-  std::cin >> supposed_to_find;
-  std::cout << "" << std::endl;
 
-  test_general << test_nr << "," << real_world_distance << "," << found_obstacles.size() << "," << supposed_to_find << "\n";
+  // init general test csv
+  std::ofstream test_general;
+  test_general.open("test/"+test_name+"/test_"+std::to_string(test_nr)+"_general.csv");
+  test_general << "testnr,obstacle_frame,testing_distance,num_found,supposed_to_find\n";
+  test_general << test_nr << "," << m.getObstacleCounter() << "," << real_world_distance << "," << found_obstacles.size() << "\n";
 
   ++test_nr;
   return true;
@@ -245,7 +245,7 @@ int main(int argc, char* argv[])
   createDMapROIS(dMapWork, dMapROI_u, dMapROI_b, 0);
 
   // create subimage container to save created subdivisions
-  m.init(dMapWork, Q_32F, 0.6, 1.0);
+  m.init(dMapWork,Q_32F, 0.1, 1.5);
   o = &m;
 
   std::cout << "test_name: ";
@@ -253,8 +253,8 @@ int main(int argc, char* argv[])
   std::cout << "" << std::endl;
 
   // init general test csv
-  test_general.open("test/"+test_name+"/"+"test_"+std::to_string(test_nr)+"_general.csv");
-  test_general << "testnr,testing_distance,num_found,supposed_to_find\n";
+  test_general.open("test/"+test_name+"/test_"+std::to_string(test_nr)+"_general.csv");
+  test_general << "testnr,obstacle_frame,testing_distance,num_found,supposed_to_find\n";
 
   running = true;
   int frame = 0;
@@ -285,7 +285,7 @@ int main(int argc, char* argv[])
           Q = stereo.getQMatrix();
           Q.convertTo(Q_32F,CV_32FC1);
           
-          m.init(dMapWork,Q_32F, 0.6, 1.0);
+          m.init(dMapWork,Q_32F, 0.1, 1.5);
           o = &m;
           detectionIsInit = false;
         }
@@ -297,14 +297,14 @@ int main(int argc, char* argv[])
           Q = stereo.getQMatrix();
           Q.convertTo(Q_32F,CV_32FC1);
          
-          m.init(dMapWork,Q_32F, 0.6, 1.0);
+          m.init(dMapWork,Q_32F, 0.1, 1.5);
           o = &m;
           detectionIsInit = false;
         }
       }
 
-      // o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_VALUE);
-      // o->detectObstacles();
+      o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_VALUE);
+      o->detectObstacles();
       found = m.getFoundObstacles();
 
       // display stuff
