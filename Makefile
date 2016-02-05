@@ -34,6 +34,12 @@ OPENCV = `pkg-config opencv --libs`
 
 LIBS = -lmvDeviceManager -lpthread $(OPENCV)
 
+test: directories $(OBJ)
+	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/test.cpp -o $(TARGETOBJDIR)/test.o
+	@echo Compiled test.cpp successfully!
+	@$(CC) $(OBJ) $(TARGETOBJDIR)/test.o -o $(BINDIR)/test $(LIB_PATH) $(LIBS)
+	@echo Linking complete!
+
 mean_test: directories $(OBJ)
 	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/mean_test.cpp -o $(TARGETOBJDIR)/mean_test.o
 	@echo Compiled mean_test.cpp successfully!
