@@ -35,6 +35,7 @@ class Stereosystem
     bool    getUndistortedImagepair(Stereopair&);
     bool    initRectification();
     bool    getRectifiedImagepair(Stereopair&);
+    bool    getRectifiedImagepair(Stereopair&, float);
     void    resetRectification();
 
     // load / save functions

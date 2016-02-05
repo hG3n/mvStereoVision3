@@ -276,6 +276,44 @@ bool Stereosystem::getRectifiedImagepair(Stereopair& sip)
   return false;
  }
 
+bool Stereosystem::getRectifiedImagepair(Stereopair& sip, float factor)
+{
+  if(!this->getImagepair(sip)) {
+    return false;
+  }
+  if(mIsInit) {
+
+    cv::remap(sip.mLeft, sip.mLeft, mMap1[0], mMap2[0], cv::INTER_LINEAR);
+    cv::remap(sip.mRight, sip.mRight, mMap1[1], mMap2[1], cv::INTER_LINEAR);
+
+    cv::Mat temp_l = sip.mLeft(mDisplayROI);
+    cv::Mat temp_r = sip.mRight(mDisplayROI);
+
+    // resize the image according to the input factor
+    cv::resize(temp_l, sip.mLeft, cv::Size(0,0), factor, factor);
+    cv::resize(temp_r, sip.mRight, cv::Size(0,0), factor, factor);
+
+    return true;
+
+  } else {
+
+    if(!this->initRectification()) {
+      return false;
+    } else {
+
+      cv::remap(sip.mLeft, sip.mLeft, mMap1[0], mMap2[0], cv::INTER_LINEAR);
+      cv::remap(sip.mRight, sip.mRight, mMap1[1], mMap2[1], cv::INTER_LINEAR);
+
+      sip.mLeft = sip.mLeft(mDisplayROI);
+      sip.mRight = sip.mRight(mDisplayROI);
+      return true;
+
+    }
+    return false;
+  }
+  return false;
+}
+
  void Stereosystem::resetRectification()
  {
   mIsInit = false;
