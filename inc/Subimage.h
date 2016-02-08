@@ -6,7 +6,14 @@
 
 struct Subimage
 {
-  
+  Subimage():
+    tl(),
+    br(),
+    roi_center(),
+    value()
+  {}
+
+
   Subimage(cv::Point const& tl, cv::Point const& br):
     tl(tl),
     br(br),

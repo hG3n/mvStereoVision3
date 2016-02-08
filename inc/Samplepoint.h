@@ -7,6 +7,13 @@
 
 struct Samplepoint
 {
+  Samplepoint():
+    center(),
+    radius(),
+    roi(),
+    value()
+  {}
+
   Samplepoint(cv::Point center, int radius): 
     center(center),
     radius(radius),
