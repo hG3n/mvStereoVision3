@@ -43,7 +43,7 @@ int view;
 cv::Mat dMapRaw;
 cv::Mat dMapNorm;
 cv::Mat dMapWork(480, 752, CV_32F);
-std::vector<Samplepoint> found;
+std::vector<Subimage> found;
 
 cv::Mat Q, Q_32F;
 cv::Mat R, R_32F;
@@ -105,10 +105,10 @@ void createDMapROIS(cv::Mat const& reference, cv::Rect & roi, bool reload = fals
 }
 
 
-void drawFoundObstacles(cv::Mat& reference, std::vector<Samplepoint> const& obstacle_vec)
+void drawFoundObstacles(cv::Mat& reference, std::vector<Subimage> const& obstacle_vec)
 {
-  std::for_each(obstacle_vec.begin(), obstacle_vec.end(), [&reference] (Samplepoint s){
-    cv::circle(reference, s.center, 3, cv::Scalar(0,0,255), -1);
+  std::for_each(obstacle_vec.begin(), obstacle_vec.end(), [&reference] (Subimage s){
+    cv::circle(reference, s.roi_center, 3, cv::Scalar(0,0,255), -1);
   });
 }
 
@@ -169,6 +169,7 @@ int main(int argc, char* argv[])
   Q.convertTo(Q_32F,CV_32FC1);
   Q_32F = Q_32F * factor;
   Q_32F.at<float>(3,2) = Q_32F.at<float>(3,2) / 0.5;
+  Q_32F.at<float>(2,3) = Q_32F.at<float>(2,3) / 0.5;
   std::cout << Q_32F << std::endl;
 
   // init OpenCV GUI objects
@@ -197,10 +198,10 @@ int main(int argc, char* argv[])
 
   // init obstacle detection 
   ObstacleDetection *o;
-  SamplepointDetection sd;
+  MeanDisparityDetection m;
   bool detectionIsInit = true;
-  sd.init(dMapWork,Q_32F, 0.1, 1.5);
-  o = &sd;
+  m.init(dMapWork,Q_32F, 0.1, 1.5);
+  o = &m;
 
   running = true;
   int frame = 0;
@@ -234,21 +235,20 @@ int main(int argc, char* argv[])
       if(detectionIsInit){
         Q = stereo.getQMatrix();
         Q.convertTo(Q_32F,CV_32FC1);
-          
-        sd.init(dMapWork,Q_32F, 0.1, 1.5);
-        o = &sd;
+
+        m.init(dMapWork,Q_32F, 0.1, 1.5);
+        o = &m;
         detectionIsInit = false;
       }
-      
-      o->build(dMapWork, binning, 1);
 
+      o->build(dMapWork, binning, 1);
       clock_t start = clock();
       o->detectObstacles();
       clock_t end = clock();
       float seconds = (float)(end-start)/CLOCKS_PER_SEC;
       times.push_back(seconds);
 
-      found = sd.getFoundObstacles();
+      found = m.getFoundObstacles();
 
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
@@ -336,30 +336,34 @@ int main(int argc, char* argv[])
     }
     ++frame;
 
-    // if(detection_frame % 50 == 0){
-    //   printf("%i\n", detection_frame);
-    //   float total = 0.0f;
-    //   std::for_each(times.begin(), times.end(), [&total](float value){
-    //     total += value;
-    //   });
-    //   float average = total/times.size();
-    //   printf("average computation time: %f\n", average);
-    //   printf("Detection Framerate: %f\n", 1/average);
-    //   printf("\n");
-    //   times.clear();
-    }
+     if(detection_frame == 1000){
+       printf("%i\n", detection_frame);
+       float total = 0.0f;
+       std::for_each(times.begin(), times.end(), [&total](float value){
+         total += value;
+       });
+       float average = total/times.size();
+       printf("average computation time: %f\n", average);
+       printf("Detection Framerate: %f\n", 1/average);
+       printf("\n");
+       times.clear();
+       times.resize(0);
+     }
 
-    if(dmap_counter % 500 == 0) {
-      printf("%i\n", dmap_counter);
+    if(dmap_counter == 1000){
+      std::cout << "dmap_counter: " << dmap_counter << std::endl;
       float total = 0.0f;
       std::for_each(dmap_times.begin(), dmap_times.end(), [&total](float value) {
         total += value;
       });
+      std::cout << total << " / " << dmap_times.size() << std::endl;
       float average = total/dmap_times.size();
-      printf("average computation time: %f\n", average);
-      printf("Disparity Framerate: %f\n", 1/average);
-      printf("\n");
+      std::cout << "average computation time: " << average << std::endl;
+      std::cout << "Disparity Framerate: " << 1/average << std::endl;
+      std::cout << "vector size: " << dmap_times.size() << std::endl;
+      std::cout << std::endl;
       dmap_times.clear();
+      dmap_times.resize(0);
     }
   }
 
