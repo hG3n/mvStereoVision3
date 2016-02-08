@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <sstream>
+#include <cstdlib>
 #include <ctime>
 
 SamplepointDetection::SamplepointDetection():
@@ -127,19 +128,24 @@ void SamplepointDetection::build(cv::Mat const& dMap, int binning, int mode)
 // -----------------------------------------------------------------------------
 void SamplepointDetection::detectObstacles() 
 {
-  // clear previous pointcloud
+  // clear found obstacles
   mFoundObstacles.clear();
+  mFoundObstacles.resize(0);
+
+  // clear found obstacles
+  mFoundPoints.clear();
+  mFoundPoints.resize(0);
 
   dMapValues dMapValues;
 
   for (unsigned int i = 0; i < mDistanceVec.size(); ++i) {
     if(mDistanceVec[i] < mRangeDisparity.first && mDistanceVec[i] > mRangeDisparity.second) {
-     
+
       // create temporary Samplepoint object and add it to the found obstacles vector
       Samplepoint temp_s = mSPVec[i];
       temp_s.value = mDistanceVec[i];
       mFoundObstacles.push_back(temp_s);
-    
+
       // fill dmap value dto with needed information to calculate the distance
       dMapValues.image_x = temp_s.center.x;
       dMapValues.image_y = temp_s.center.y;
@@ -148,24 +154,24 @@ void SamplepointDetection::detectObstacles()
       // create pointcloud vertices containing image coords and distance as z values
       cv::Mat coordinate = Utility::calcCoordinate(dMapValues, mQ_32F);
       mFoundPoints.push_back(coordinate);
-    
-    }
-    // do not save any pointclouds if there are no found obstacles
-    if(mFoundPoints.size() != 0) {
-      // save pointcloud for each frame where an obstacle was found
-      ply p("Hagen Hiller", "obstacle pointcloud", mDMap);
-      std::string prefix = "";
-      if(mObstacleCounter < 10) {
-        prefix +="000";
-      } else if ((mObstacleCounter >=10) && (mObstacleCounter <100)) {
-        prefix += "00";
-      } else if(mObstacleCounter >= 100) {
-        prefix +="0";
-      }
-      p.write("pcl/samplepoint_detection/pcl_" + prefix + std::to_string(mObstacleCounter) + ".ply", mFoundPoints, ply::MODE::WITH_COLOR);
-      ++mObstacleCounter;      
     }
   }
+  // do not save any pointclouds if there are no found obstacles
+  if(mFoundPoints.size() != 0) {
+    // save pointcloud for each frame where an obstacle was found
+    ply p("Hagen Hiller", "obstacle pointcloud", mDMap);
+    std::string prefix = "";
+    if(mObstacleCounter < 10) {
+      prefix +="000";
+    } else if ((mObstacleCounter >=10) && (mObstacleCounter <100)) {
+      prefix += "00";
+    } else if(mObstacleCounter >= 100) {
+      prefix +="0";
+    }
+    p.write("pcl/samplepoint_detection/pcl_" + prefix + std::to_string(mObstacleCounter) + ".ply", mFoundPoints, ply::MODE::WITH_COLOR);
+    ++mObstacleCounter;
+  }
+
 
   // TODO: just use points in a specific range
 /*  std::vector<unsigned int> distance_indices;

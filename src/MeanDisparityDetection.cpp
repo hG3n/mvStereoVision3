@@ -195,7 +195,7 @@ void MeanDisparityDetection::build(cv::Mat const& dMap, int binning, int mode)
       mDetectionMode = MODE::MEAN_VALUE;
       // clear previous disparity values
       mMeanMap.clear();
-      for (int i = 0; i < mSubimageVec.size(); ++i) {
+      for (unsigned int i = 0; i < mSubimageVec.size(); ++i) {
         // calculate mean disparity value for each sample point
         mSubimageVec[i].calculateSubimageValue(dMap);
         // fill mean map with median disparity values
@@ -212,7 +212,7 @@ void MeanDisparityDetection::detectObstacles()
 {
 
   if(mDetectionMode == MODE::MEAN_DISTANCE) {
-   
+
     for(unsigned int i = 0; i < mMeanDistanceMap.size(); ++i) {
       if(mMeanDistanceMap[i] < mRange.second && mMeanDistanceMap[i] > mRange.first) {
         std::cout << "Obstacle found in: " << mPositions[i] << std::endl;
@@ -221,9 +221,13 @@ void MeanDisparityDetection::detectObstacles()
 
   } else if (mDetectionMode == MODE::MEAN_VALUE) {
 
-    // clear previous points from pointcloud
+    // clear previous found obstacles
     mFoundObstacles.clear();
+    mFoundObstacles.resize(0);
+
+    // clear previous points from pointcloud
     mFoundPoints.clear();
+    mFoundPoints.resize(0);
 
     dMapValues dMapValues;
     for(unsigned int i = 0; i < mMeanMap.size(); ++i) {
