@@ -255,10 +255,6 @@ int main(int argc, char* argv[])
   std::cin >> test_name;
   std::cout << "" << std::endl;
 
-  // init general test csv
-  test_general.open("test/"+test_name+"/"+"test_"+std::to_string(test_nr)+"_general.csv");
-  test_general << "testnr,testing_distance,num_found,supposed_to_find\n";
-
   running = true;
   int frame = 0;
   while(running)
@@ -307,8 +303,7 @@ int main(int argc, char* argv[])
       }
 
       // obstacle detection
-      // o->build(dMapWork, binning, 0);
-      // o->detectObstacles();
+      o->build(dMapWork, binning, 0);
       // found = sd.getFoundObstacles();
 
       // display stuff
@@ -394,7 +389,8 @@ int main(int argc, char* argv[])
           }
           break;
         case 'd':
-          Utility::dmap2pcl("pointcloud.ply", dMapRaw, Q_32F);
+          // Utility::dmap2pcl("pointcloud.ply", dMapRaw, Q_32F);
+          o->detectObstacles();
           std::cout << " " << std::endl;
           break;
         case 'p':

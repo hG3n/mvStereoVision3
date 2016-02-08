@@ -56,6 +56,7 @@ bool detectionIsInit = true;
 
 int test_nr = 0;
 std::string test_name;
+std::ofstream test_general;
 
 void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
 {
@@ -252,10 +253,6 @@ int main(int argc, char* argv[])
   std::cin >> test_name;
   std::cout << "" << std::endl;
 
-  // init general test csv
-  test_general.open("test/"+test_name+"/test_"+std::to_string(test_nr)+"_general.csv");
-  test_general << "testnr,obstacle_frame,testing_distance,num_found,supposed_to_find\n";
-
   running = true;
   int frame = 0;
   while(running)
@@ -304,8 +301,7 @@ int main(int argc, char* argv[])
       }
 
       o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_VALUE);
-      o->detectObstacles();
-      found = m.getFoundObstacles();
+      // found = m.getFoundObstacles();
 
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
@@ -387,7 +383,8 @@ int main(int argc, char* argv[])
           }
           break;
         case 'd':
-          Utility::dmap2pcl("pointcloud.ply", dMapRaw, Q_32F);
+          // Utility::dmap2pcl("pointcloud.ply", dMapRaw, Q_32F);
+          o->detectObstacles();
           break;
         case 'v':
             ++view;
