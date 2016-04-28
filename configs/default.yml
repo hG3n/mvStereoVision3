@@ -3,9 +3,9 @@
 inputImages: ./images/foobar
 outputImages: ./images/foobar
 
-capturedImagesRectified: ./images/dataset-binned
+capturedImagesRectified: ./images/demo
 
 capturedDisparities: ./images/disparityMaps
 
 outputParameter: ./parameters/foobar
-inputParameter: ./parameters/smallBL
+inputParameter: ./parameters/baseline_small
