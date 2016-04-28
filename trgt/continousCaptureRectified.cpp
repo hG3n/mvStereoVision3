@@ -11,6 +11,8 @@
 
 INITIALIZE_EASYLOGGINGPP
 
+int exposure = 10000;
+
 int main(int argc, char* argv[])
 {
   std::string tag = "MAIN\t";
@@ -119,15 +121,19 @@ int main(int argc, char* argv[])
       std::string prefix = "";
       if(imageNumber < 10)
       {
-        prefix +="000";
+        prefix += "0000";
       }
       else if ((imageNumber >=10) && (imageNumber <100))
       {
+        prefix += "000";
+      }
+      else if((imageNumber >= 100) && (imageNumber < 1000))
+      {
         prefix += "00";
       }
-      else if(imageNumber >= 100)
+      else if((imageNumber >= 1000) && (imageNumber < 10000))
       {
-        prefix +="0";
+        prefix += "0";
       }
       cv::imwrite(std::string(pathLeft+"/left_"+prefix+std::to_string(imageNumber)+".jpg"),s.mLeft);
       cv::imwrite(std::string(pathRight+"/right_"+prefix+std::to_string(imageNumber)+".jpg"),s.mRight);
@@ -166,6 +172,18 @@ int main(int argc, char* argv[])
         LOG(INFO) << tag << "Capture disabled" << std::endl;
       }
     }
+    else if( key == 'E') {
+      exposure += 1000;
+      left->setExposure(exposure);
+      right->setExposure(exposure);
+    }
+    else if( key == 'e') {
+      exposure -= 1000;
+      left->setExposure(exposure);
+      right->setExposure(exposure);
+    }
+
+    
   }
   return 0;
 }
