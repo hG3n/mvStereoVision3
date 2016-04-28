@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
   ObstacleDetection *o;
   SamplepointDetection sd;
   bool detectionIsInit = true;
-  sd.init(dMapWork,Q_32F, 0.1, 1.5);
+  sd.init(dMapWork,Q_32F, 0.1, 1.0);
   o = &sd;
 
   running = true;
@@ -233,32 +233,33 @@ int main(int argc, char* argv[])
         reload = false;
       }
 
-     
-      
+
+
       dMapRaw.convertTo(dMapWork, CV_32F);
       dMapWork = dMapRaw(dMapROI);
 
       if(detectionIsInit){
         Q = stereo.getQMatrix();
         Q.convertTo(Q_32F,CV_32FC1);
-          
-        sd.init(dMapWork,Q_32F, 0.1, 1.5);
+
+        sd.init(dMapWork,Q_32F, 0.1, 1.0);
         o = &sd;
         detectionIsInit = false;
       }
-      
+
       o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_VALUE);
-      
+
       clock_t start = clock();
       o->detectObstacles();
       clock_t end = clock();
-      float seconds = (float)(end-start)/CLOCKS_PER_SEC;
-      times.push_back(seconds);
-      
 
+
+
+float seconds = (float)(end-start)/CLOCKS_PER_SEC;
+      times.push_back(seconds);
 
       // found = sd.getFoundObstacles();
-      
+
 
       // display stuff
       // cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
@@ -297,17 +298,17 @@ int main(int argc, char* argv[])
           cond_var.notify_one();
           running = false;
           break;
-        case 'f':
-          std::cout << "Camera Framerate:" << std::endl;
-          std::cout<< left->getFramerate() << " " << right-> getFramerate() <<std::endl;
-          std::cout << "Disparity Framerate:" << std::endl;float total = 0.0f;
-          float total = 0.0f;
-          std::for_each(dmap_times.begin(), dmap_times.end(), [&total](float value) {
-            total += value;
-          });
-          float average = total/dmap_times.size();
-          std::cout << average << std::endl;
-          break;
+//        case 'f':
+//          std::cout << "Camera Framerate:" << std::endl;
+//          std::cout<< left->getFramerate() << " " << right-> getFramerate() <<std::endl;
+//          std::cout << "Disparity Framerate:" << std::endl;
+//          float total = 0.0f;
+//          std::for_each(dmap_times.begin(), dmap_times.end(), [&total](float value) {
+//            total += value;
+//          });
+//          float average = total/dmap_times.size();
+//          std::cout << average << std::endl;
+//          break;
         case 'r':
           Disparity::loadSGBMParameters("./configs/sgbm.yml", disparitySGBM, sgbmParameters);
           detectionIsInit = true;
@@ -376,10 +377,12 @@ int main(int argc, char* argv[])
       float average = total/dmap_times.size();
       printf("average computation time: %f\n", average);
       printf("Disparity Framerate: %f\n", 1/average);
-      return 0;
     }
+    
+    if(dmap_counter >= 1000 && detection_frame >= 1000)
+      return 0;
   }
-  
+
   // release matrices 
   dMapRaw.release();
   dMapNorm.release();

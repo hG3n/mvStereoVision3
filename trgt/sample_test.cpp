@@ -56,7 +56,6 @@ bool detectionIsInit = true;
 
 int test_nr = 0;
 std::string test_name;
-std::ofstream test_general;
 
 void disparityCalcSGBM(Stereopair const& s, cv::Ptr<cv::StereoSGBM> disparity)
 {
@@ -130,7 +129,7 @@ bool save_test_set(std::vector<Samplepoint> const& found_obstacles, Stereopair c
   // save images
   cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_left.jpg",s.mLeft);
   cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_right.jpg",s.mRight);
-  cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_disparity.jpg",dMapWork);
+  cv::imwrite(directory+"_test_"+ std::to_string(test_nr) +"_disparity.jpg",dMapNorm);
 
   // save disparity matrix
   cv::FileStorage fs(directory+"_test_"+std::to_string(test_nr)+"_dmaps.yml",cv::FileStorage::WRITE);
@@ -142,6 +141,7 @@ bool save_test_set(std::vector<Samplepoint> const& found_obstacles, Stereopair c
   o->build(dMapWork, binning,0);
   o->detectObstacles();
   found = sd.getFoundObstacles();
+  int obstacle_frame = sd.getObstacleCounter();
 
   // save found obstacles to csv
   std::ofstream out;
@@ -156,17 +156,16 @@ bool save_test_set(std::vector<Samplepoint> const& found_obstacles, Stereopair c
   });
 
   // save general infos to csv
-  int real_world_distance, supposed_to_find;
+  int real_world_distance;
   std::cout << "testing distance:           ";
   std::cin >> real_world_distance;
   std::cout << "" << std::endl;
-  std::cout << "supposed to find obstacles: ";
-  std::cin >> supposed_to_find;
-  std::cout << "" << std::endl;
-
-  test_general << test_nr << "," << real_world_distance << "," << found_obstacles.size() << "," << supposed_to_find << "\n";
 
 
+  std::ofstream test_general;
+  test_general.open(directory+"general_"+test_name + "_" + std::to_string(test_nr)+".csv");
+  test_general << "testnr,obstacle_frame,testing_distance,num_found\n";
+  test_general << test_nr << "," << obstacle_frame << "," << real_world_distance << "," << found_obstacles.size() << "\n";
   ++test_nr;
 return true;
 }
@@ -247,7 +246,7 @@ int main(int argc, char* argv[])
   createDMapROIS(dMapWork, dMapROI_u, dMapROI_b, 0);
 
   // create subimage container to save created subdivisions
-  sd.init(dMapWork, Q_32F, 0.1, 1.0);
+  sd.init(dMapWork, Q_32F, 0.1, 2.0);
   std::vector<Samplepoint> layout_container = sd.getFoundObstacles();
   o = &sd;
 
@@ -284,7 +283,7 @@ int main(int argc, char* argv[])
           Q = stereo.getQMatrix();
           Q.convertTo(Q_32F,CV_32FC1);
           
-          sd.init(dMapWork,Q_32F, 0.6, 1.0);
+          sd.init(dMapWork, Q_32F, 0.1, 2.0);
           o = &sd;
           detectionIsInit = false;
         }
@@ -296,7 +295,7 @@ int main(int argc, char* argv[])
           Q = stereo.getQMatrix();
           Q.convertTo(Q_32F,CV_32FC1);
          
-          sd.init(dMapWork,Q_32F, 0.6, 1.0);
+          sd.init(dMapWork, Q_32F, 0.1, 2.0);
           o = &sd;
           detectionIsInit = false;
         }
@@ -304,7 +303,8 @@ int main(int argc, char* argv[])
 
       // obstacle detection
       o->build(dMapWork, binning, 0);
-      // found = sd.getFoundObstacles();
+      o->detectObstacles();
+      found = sd.getFoundObstacles();
 
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
@@ -389,9 +389,8 @@ int main(int argc, char* argv[])
           }
           break;
         case 'd':
-          // Utility::dmap2pcl("pointcloud.ply", dMapRaw, Q_32F);
-          o->detectObstacles();
-          std::cout << " " << std::endl;
+          Utility::dmap2pcl("pointcloud.ply", dMapRaw, Q_32F);
+          cv::imwrite("dmap_norm.png", dMapNorm);
           break;
         case 'p':
           std::cout << Q_32F << std::endl;
@@ -400,9 +399,26 @@ int main(int argc, char* argv[])
           if(!(save_test_set(found, s, binning)))
             continue;
           break;
+        case 's':
+        {
+          cv::imwrite("dmap_" + std::to_string(frame) + ".jpg", dMapNorm);
+          cv::Mat dMapRawNorm;
+          cv::normalize(dMapRaw,dMapRawNorm,0,255,cv::NORM_MINMAX, CV_8U);
+          cv::imwrite("dmap_full_" + std::to_string(frame) + ".jpg", dMapRawNorm);
+          break;
+        }
         case 'v':
             ++view;
             break;
+        case 'n':
+        {
+          cv::FileStorage g("afterCalibrationParameters.yml", cv::FileStorage::WRITE);
+          g << "Q" << Q_32F;
+          g << "K_L" << stereo.getNewKMats()[0];
+          g << "K_R" << stereo.getNewKMats()[1];
+          g.release();
+          break;
+        }
         default:
           std::cout << "Key pressed has no action" << std::endl;
           break;

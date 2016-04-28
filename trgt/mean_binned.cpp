@@ -232,31 +232,32 @@ int main(int argc, char* argv[])
         reload = false;
       }
 
-      
+
       dMapRaw.convertTo(dMapWork, CV_32F);
       dMapWork = dMapRaw(dMapROI);
 
       if(detectionIsInit){
         Q = stereo.getQMatrix();
         Q.convertTo(Q_32F,CV_32FC1);
-          
+
         m.init(dMapWork,Q_32F, 0.1, 1.5);
         o = &m;
         detectionIsInit = false;
       }
-      
+
 
       o->build(dMapWork, binning, MeanDisparityDetection::MODE::MEAN_VALUE);
-
       clock_t start = clock();
       o->detectObstacles();
       clock_t end = clock();
-      float seconds = (float)(end-start)/CLOCKS_PER_SEC;
-      times.push_back(seconds);
+
 
       found = m.getFoundObstacles();
 
-      
+
+      float seconds = (float)(end-start)/CLOCKS_PER_SEC;
+      times.push_back(seconds);
+
 
       // display stuff
       // cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
@@ -366,8 +367,10 @@ int main(int argc, char* argv[])
       float average = total/dmap_times.size();
       printf("average computation time: %f\n", average);
       printf("Disparity Framerate: %f\n", 1/average);
-      return 0;
     }
+
+    if(dmap_counter >= 1000 && detection_frame >= 1000)
+      return 0;
   }
 
   

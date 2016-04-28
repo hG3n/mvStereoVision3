@@ -43,7 +43,7 @@ int view;
 cv::Mat dMapRaw;
 cv::Mat dMapNorm;
 cv::Mat dMapWork(480, 752, CV_32F);
-std::vector<Subimage> found;
+std::vector<Samplepoint> found;
 
 cv::Mat Q, Q_32F;
 cv::Mat R, R_32F;
@@ -105,10 +105,10 @@ void createDMapROIS(cv::Mat const& reference, cv::Rect & roi, bool reload = fals
 }
 
 
-void drawFoundObstacles(cv::Mat& reference, std::vector<Subimage> const& obstacle_vec)
+void drawFoundObstacles(cv::Mat& reference, std::vector<Samplepoint> const& obstacle_vec)
 {
-  std::for_each(obstacle_vec.begin(), obstacle_vec.end(), [&reference] (Subimage s){
-    cv::circle(reference, s.roi_center, 3, cv::Scalar(0,0,255), -1);
+  std::for_each(obstacle_vec.begin(), obstacle_vec.end(), [&reference] (Samplepoint s){
+    cv::circle(reference, s.center, 3, cv::Scalar(0,0,255), -1);
   });
 }
 
@@ -198,10 +198,10 @@ int main(int argc, char* argv[])
 
   // init obstacle detection 
   ObstacleDetection *o;
-  MeanDisparityDetection m;
+  SamplepointDetection sd;
   bool detectionIsInit = true;
-  m.init(dMapWork,Q_32F, 0.1, 1.5);
-  o = &m;
+  sd.init(dMapWork,Q_32F, 0.1, 1.5);
+  o = &sd;
 
   running = true;
   int frame = 0;
@@ -236,19 +236,19 @@ int main(int argc, char* argv[])
         Q = stereo.getQMatrix();
         Q.convertTo(Q_32F,CV_32FC1);
 
-        m.init(dMapWork,Q_32F, 0.1, 1.5);
-        o = &m;
+        sd.init(dMapWork,Q_32F, 0.1, 1.5);
+        o = &sd;
         detectionIsInit = false;
       }
 
-      o->build(dMapWork, binning, 1);
       clock_t start = clock();
+      o->build(dMapWork, binning, 1);
       o->detectObstacles();
       clock_t end = clock();
       float seconds = (float)(end-start)/CLOCKS_PER_SEC;
       times.push_back(seconds);
 
-      found = m.getFoundObstacles();
+      found = sd.getFoundObstacles();
 
       // display stuff
       cv::normalize(dMapWork,dMapNorm,0,255,cv::NORM_MINMAX, CV_8U);
