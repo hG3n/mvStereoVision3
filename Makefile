@@ -34,6 +34,18 @@ OPENCV = `pkg-config opencv --libs`
 
 LIBS = -lmvDeviceManager -lpthread $(OPENCV)
 
+calibrate: directories $(OBJ)
+	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/calibrate.cpp -o $(TARGETOBJDIR)/calibrate.o
+	@echo Compiled calibrate.cpp successfully!
+	@$(CC) $(OBJ) $(TARGETOBJDIR)/calibrate.o -o $(BINDIR)/calibrate $(LIB_PATH) $(LIBS)
+	@echo Linking complete!
+
+demo: directories $(OBJ)
+	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/demo.cpp -o $(TARGETOBJDIR)/demo.o
+	@echo Compiled demo.cpp successfully!
+	@$(CC) $(OBJ) $(TARGETOBJDIR)/demo.o -o $(BINDIR)/demo $(LIB_PATH) $(LIBS)
+	@echo Linking complete!
+
 test: directories $(OBJ)
 	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/test.cpp -o $(TARGETOBJDIR)/test.o
 	@echo Compiled test.cpp successfully!
@@ -44,6 +56,12 @@ mean_test: directories $(OBJ)
 	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/mean_test.cpp -o $(TARGETOBJDIR)/mean_test.o
 	@echo Compiled mean_test.cpp successfully!
 	@$(CC) $(OBJ) $(TARGETOBJDIR)/mean_test.o -o $(BINDIR)/mean_test $(LIB_PATH) $(LIBS)
+	@echo Linking complete!
+
+mean_binned: directories $(OBJ)
+	@$(CC) $(CFLAGS) $(INC_PATH) $(TARGETDIR)/mean_binned.cpp -o $(TARGETOBJDIR)/mean_binned.o
+	@echo Compiled mean_binned.cpp successfully!
+	@$(CC) $(OBJ) $(TARGETOBJDIR)/mean_binned.o -o $(BINDIR)/mean_binned $(LIB_PATH) $(LIBS)
 	@echo Linking complete!
 
 sample_test: directories $(OBJ)
