@@ -35,7 +35,7 @@ struct Samplepoint
       cv::Mat temp = dMap(roi);
       value = Utility::calcMeanDisparity(temp);
     } else {
-      value = dMap.at<short>(center.x, center.y);
+      value = dMap.at<short>(center.y, center.x);
     }
   }
 
