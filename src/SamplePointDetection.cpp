@@ -97,6 +97,11 @@ std::vector<Samplepoint> SamplepointDetection::getFoundObstacles() const
   return mFoundObstacles;
 }
 
+int SamplepointDetection::getObstacleCounter() const
+{
+  return mObstacleCounter;
+}
+
 // -----------------------------------------------------------------------------
 // --- setter ------------------------------------------------------------------
 // -----------------------------------------------------------------------------
